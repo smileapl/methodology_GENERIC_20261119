@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>外挂服务器逆向还原 · 通用版说明</title><style>
+*{box-sizing:border-box}
+body{margin:0;background:#f6f7f9;color:#1f2328;
+     font:15px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{display:flex;max-width:1500px;margin:0 auto}
+nav{position:sticky;top:0;width:290px;height:100vh;overflow-y:auto;
+    background:#fff;border-right:1px solid #e3e6ea;padding:18px 14px;flex:0 0 290px}
+nav h3{margin:14px 0 6px;font-size:13px;color:#8a9099;letter-spacing:.5px}
+nav a{display:block;padding:3px 8px;color:#2d333b;text-decoration:none;
+      font-size:13px;border-radius:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav a:hover{background:#eef3fb;color:#0b62d6}
+nav a.lv1{font-weight:600;margin-top:5px}
+nav a.lv2{padding-left:20px;color:#5a6472}
+nav a.lv3{padding-left:32px;color:#7c8593;font-size:12px}
+main{flex:1;min-width:0;padding:34px 52px 140px;background:#fff}
+h1{font-size:29px;border-bottom:3px solid #0b62d6;padding-bottom:12px;margin:0 0 26px}
+h2{font-size:22px;margin:44px 0 14px;padding-left:11px;border-left:5px solid #0b62d6}
+h3{font-size:17px;margin:30px 0 10px;color:#0d4ea6}
+h4{font-size:15px;margin:22px 0 8px;color:#374151}
+p{margin:11px 0}
+code{background:#eef1f4;color:#c0392b;padding:1.5px 5px;border-radius:4px;
+     font:13px/1.5 Consolas,"Cascadia Mono",monospace}
+pre{background:#1f2430;color:#e6e6e6;padding:15px 17px;border-radius:8px;
+    overflow-x:auto;margin:15px 0}
+pre code{background:none;color:inherit;padding:0;font-size:12.5px;line-height:1.62}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px}
+th,td{border:1px solid #d6dae0;padding:7px 11px;text-align:left;vertical-align:top}
+th{background:#eef2f7;font-weight:600}
+tr:nth-child(even) td{background:#fafbfc}
+blockquote{margin:15px 0;padding:11px 18px;background:#fff8e1;
+           border-left:4px solid #f0a500;color:#5c4a00}
+ul,ol{margin:11px 0;padding-left:26px}
+li{margin:5px 0}
+hr{border:0;border-top:1px solid #e3e6ea;margin:32px 0}
+</style></head><body><div class="wrap">
+<nav><h3>目录</h3>
+<a class="lv1" data-id="h1" href="#">外挂服务器逆向还原 · 通用版说明</a>
+<a class="lv2" data-id="h2" href="#">一、文档构成</a>
+<a class="lv2" data-id="h3" href="#">二、这版做了哪些结构调整</a>
+<a class="lv2" data-id="h4" href="#">三、术语改名表（先记这三行）</a>
+<a class="lv2" data-id="h5" href="#">四、建议阅读顺序</a>
+<a class="lv2" data-id="h6" href="#">五、这版的可验证性来自什么</a>
+<a class="lv2" data-id="h7" href="#">六、与上一版的关系</a>
+<a class="lv2" data-id="h8" href="#">七、使用边界</a>
+</nav>
+<main><h1 id="h1">外挂服务器逆向还原 · 通用版说明</h1>
+<blockquote>本仓库讲的是<strong>把某个外挂套件（游戏辅助工具）背后的私有服务端重新造出来</strong>：授权/卡密、配置与偏移表下发、版本更新、心跳与远程指令、卡盟发卡对接。<br><br>主体是<strong>外挂自己的后台</strong>，不是游戏服务器，也不是外挂客户端本身。这个区分是全文第一条纪律，搞错主体，后面所有判据都会指向错误的对象。</blockquote>
+<hr>
+<h2 id="h2">一、文档构成</h2>
+<table><thead><tr><th>文件</th><th>定位</th><th>规模</th></tr></thead><tbody><tr><td><a href="CHEAT_SERVER_REVERSE_GENERIC_METHODOLOGY.md"><code>CHEAT_SERVER_REVERSE_GENERIC_METHODOLOGY.md</code></a></td><td><strong>主文档</strong>：14 章（0–13）+ 5 个附录（A–E）</td><td>54,000+ 字符 / 1,700+ 行</td></tr><tr><td><a href="GENERIC_CHECKLIST.md"><code>GENERIC_CHECKLIST.md</code></a></td><td><strong>一页速查</strong>：12 阶段主表 + 5 张专项清单 + 自检/报数/停手/交付</td><td>约 7,400 汉字</td></tr><tr><td><a href="GENERIC_PITFALLS.md"><code>GENERIC_PITFALLS.md</code></a></td><td><strong>可泛化坑表</strong>：43 条，按八个分组</td><td>约 1.3 万汉字</td></tr><tr><td><a href="NOTICE.md"><code>NOTICE.md</code></a></td><td>仓库总说明（这是什么 / 索引 / 阅读顺序 / 使用边界）</td><td>约 5 KB</td></tr><tr><td><code>*.html</code> 三件套</td><td>上述三份 MD 的<strong>只读渲染版</strong>（带侧边目录）</td><td>—</td></tr></tbody></table>
+<hr>
+<h2 id="h3">二、这版做了哪些结构调整</h2>
+<table><thead><tr><th>维度</th><th>上一版（游戏服务端重建）</th><th>本版（外挂服务器还原）</th><th>为什么换</th></tr></thead><tbody><tr><td>还原对象</td><td>目标游戏自己的业务服</td><td>外挂套件自己的后台</td><td>前者的代码与协议属于游戏；后者的"能不能用"由外挂服务端决定</td></tr><tr><td>核心链路</td><td>登录 → 进场景 → 业务请求 → 状态迁移</td><td>卡密 → token → 拉配置 → 注入 → 心跳扣时 → 到期/踢人</td><td>交付物从"能玩"变成"能用、能计费、能停"</td></tr><tr><td>协议建模单位</td><td>帧 / 方法号 / 容器路径号</td><td>端点 / 字段 / 卡密记录</td><td>外挂后台几乎全是 HTTP(S) 或轻量长连，端点才是自然单位</td></tr><tr><td>关键数据</td><td>属性、容器、实体 guid</td><td><code>CFG_BLOB</code>、<code>OFFSETS_TABLE</code>、剩余时间</td><td>外挂的"弹药"是偏移表，不是物品数据</td></tr><tr><td>风控视角</td><td>识别官方反作弊机制</td><td>识别<strong>客户端上报面</strong>与封禁下发形态</td><td>目标是让自建服不被上游一套判定带走</td></tr><tr><td>工程重心</td><td>状态机与幂等</td><td>账本一致性 + 配置同代 + 卡盟对账</td><td>外挂后台的失败代价是钱</td></tr></tbody></table>
+<hr>
+<h2 id="h4">三、术语改名表（先记这三行）</h2>
+<table><thead><tr><th>本文用词</th><th>指什么</th><th>不要理解成</th></tr></thead><tbody><tr><td><strong>服务端</strong></td><td>外挂自己的后台（授权/配置/更新/心跳/卡盟）</td><td>游戏服务器</td></tr><tr><td><strong>客户端</strong></td><td>外挂本体：loader + 注入模块 + UI + 网络层</td><td>游戏客户端</td></tr><tr><td><strong>宿主</strong></td><td>被辅助的游戏进程</td><td>外挂进程</td></tr></tbody></table>
+<p>其余占位常量（<code>TARGET</code>、<code>CHEAT_CORE</code>、<code>LICENSE_KEY</code>、<code>HWID</code>、<code>API_BASE</code>、<code>CFG_BLOB</code>、<code>OFFSETS_TABLE</code>、<code>SIG_KEY</code>、<code>SESSION_TOKEN</code>、<code>CARDMALL_API</code>、<code>MSG_*</code> 等）在主文档「阅读约定」一节有完整表。</p>
+<hr>
+<h2 id="h5">四、建议阅读顺序</h2>
+<ol><li><strong>本文件 + <a href="NOTICE.md"><code>NOTICE.md</code></a></strong> —— 10 分钟，确认"这是方法论而非教程/工具包"。</li><li><strong>主文档「第 0 章 总纲」</strong> —— 三条前提的实证动作（断网 / 黑洞 / 空 200），10 分钟能做完，<strong>不做完别往下读</strong>。</li><li><strong><a href="GENERIC_CHECKLIST.md"><code>GENERIC_CHECKLIST.md</code></a></strong> 的 P0–P11 主表 —— 建立全局节奏。</li><li><strong>带具体问题回主文档</strong>（不要顺读 1700 行）：卡在授权看第 6 章，卡在配置看第 7 章，卡在"返回 200 但功能不亮"看第 9 章。</li><li><strong>动手前扫 <a href="GENERIC_PITFALLS.md"><code>GENERIC_PITFALLS.md</code></a></strong> —— 43 条里至少一半是"不知道就白干两天"。</li><li>交付前回到主文档「第 13 章 一页速查」过验收十项。</li></ol>
+<hr>
+<h2 id="h6">五、这版的可验证性来自什么</h2>
+<ul><li>每条结论带标记：<strong>【判据】</strong>（可复现）/<strong>【实测】</strong>（有代次）/<strong>【反例】</strong>（骗过一次的形态）/<strong>【估算】</strong>（有前提）。</li><li>每章末尾有「本章要点」，作为快速自检。</li><li>需要"改一手验证"的地方都给了<strong>最小可跑代码</strong>：XOR 扫描、KDF 候选枚举、签名拼接枚举、AES-CBC 双 IV 位置试解、RC4、心跳间隔统计、回调验签。</li><li>报数字的规矩写在明处：必须给<strong>分母 + Δ + 未命名占比 + 档位</strong>，只报百分比视为无效。</li></ul>
+<hr>
+<h2 id="h7">六、与上一版的关系</h2>
+<p>上一版三份文档（<code>GAME_SERVER_REBUILD_GENERIC_METHODOLOGY.md</code> / <code>GENERIC_CHECKLIST.md</code> / <code>GENERIC_PITFALLS.md</code>）的内容是一个<strong>联网游戏自有服务端</strong>的重建方法论。本版把它们整体改写为<strong>外挂服务器还原</strong>，链路、术语、数据模型、坑表、验收项全部替换；旧版仍保留在 git 历史里，可用下面的命令取回：</p>
+<pre><code>git log --oneline -- GAME_SERVER_REBUILD_GENERIC_METHODOLOGY.md
+git show &lt;commit&gt;:GAME_SERVER_REBUILD_GENERIC_METHODOLOGY.md &gt; old_methodology.md</code></pre>
+<p>两版可以并读：<strong>旧版讲"怎么理解一个自加密的私有协议"，本版讲"怎么把一个靠协议吃饭的生意重新跑起来"</strong>。方法层有继承，判据层几乎全不同 —— 不要混用。</p>
+<hr>
+<h2 id="h8">七、使用边界</h2>
+<ul><li>本仓库只有文档与方法，<strong>不含</strong>可运行的攻击工具、目标地址、凭据、卡密或私有数据。</li><li>文中所有编号类信息（消息号、错误码、卡密校验位、偏移字段）均标注「换目标必须重新枚举」，照抄会失败，这是刻意的。</li><li>引用请注明来源仓库；转载正文请保留本文件的术语改名表与 <a href="NOTICE.md"><code>NOTICE.md</code></a> 的使用边界，否则"通用版"会退化成"看起来像教程的残缺笔记"。</li></ul>
+</main></div>
+<script>
+document.querySelectorAll('nav a').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.getElementById(a.dataset.id);
+    if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+</script></body></html>

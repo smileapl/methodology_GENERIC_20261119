@@ -1,0 +1,897 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>外挂服务器逆向还原方法论（通用 · 去标识版）</title><style>
+*{box-sizing:border-box}
+body{margin:0;background:#f6f7f9;color:#1f2328;
+     font:15px/1.75 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+.wrap{display:flex;max-width:1500px;margin:0 auto}
+nav{position:sticky;top:0;width:290px;height:100vh;overflow-y:auto;
+    background:#fff;border-right:1px solid #e3e6ea;padding:18px 14px;flex:0 0 290px}
+nav h3{margin:14px 0 6px;font-size:13px;color:#8a9099;letter-spacing:.5px}
+nav a{display:block;padding:3px 8px;color:#2d333b;text-decoration:none;
+      font-size:13px;border-radius:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav a:hover{background:#eef3fb;color:#0b62d6}
+nav a.lv1{font-weight:600;margin-top:5px}
+nav a.lv2{padding-left:20px;color:#5a6472}
+nav a.lv3{padding-left:32px;color:#7c8593;font-size:12px}
+main{flex:1;min-width:0;padding:34px 52px 140px;background:#fff}
+h1{font-size:29px;border-bottom:3px solid #0b62d6;padding-bottom:12px;margin:0 0 26px}
+h2{font-size:22px;margin:44px 0 14px;padding-left:11px;border-left:5px solid #0b62d6}
+h3{font-size:17px;margin:30px 0 10px;color:#0d4ea6}
+h4{font-size:15px;margin:22px 0 8px;color:#374151}
+p{margin:11px 0}
+code{background:#eef1f4;color:#c0392b;padding:1.5px 5px;border-radius:4px;
+     font:13px/1.5 Consolas,"Cascadia Mono",monospace}
+pre{background:#1f2430;color:#e6e6e6;padding:15px 17px;border-radius:8px;
+    overflow-x:auto;margin:15px 0}
+pre code{background:none;color:inherit;padding:0;font-size:12.5px;line-height:1.62}
+table{border-collapse:collapse;width:100%;margin:16px 0;font-size:13.5px}
+th,td{border:1px solid #d6dae0;padding:7px 11px;text-align:left;vertical-align:top}
+th{background:#eef2f7;font-weight:600}
+tr:nth-child(even) td{background:#fafbfc}
+blockquote{margin:15px 0;padding:11px 18px;background:#fff8e1;
+           border-left:4px solid #f0a500;color:#5c4a00}
+ul,ol{margin:11px 0;padding-left:26px}
+li{margin:5px 0}
+hr{border:0;border-top:1px solid #e3e6ea;margin:32px 0}
+</style></head><body><div class="wrap">
+<nav><h3>目录</h3>
+<a class="lv1" data-id="h1" href="#">外挂服务器逆向还原方法论（通用 · 去标识版）</a>
+<a class="lv2" data-id="h2" href="#">阅读约定（先读这一节）</a>
+<a class="lv3" data-id="h3" href="#">1. 证据标注规则</a>
+<a class="lv3" data-id="h4" href="#">2. 去标识与其边界</a>
+<a class="lv3" data-id="h5" href="#">3. 三条术语改名（务必先记住）</a>
+<a class="lv3" data-id="h6" href="#">4. 占位常量表（正文只用这些）</a>
+<a class="lv2" data-id="h7" href="#">全书地图</a>
+<a class="lv1" data-id="h8" href="#">第 0 章 总纲：从「外挂能用」到「服务器归我」</a>
+<a class="lv2" data-id="h9" href="#">0.1 三条前提（不成立就别往下走）</a>
+<a class="lv3" data-id="h10" href="#">前提 A 的实证方式（做法值得照抄，不需要照抄结论）</a>
+<a class="lv3" data-id="h11" href="#">前提 C 的形状（最关键的一段）</a>
+<a class="lv2" data-id="h12" href="#">0.2 成功判据五档（报进度只能报档，不能报"差不多了"）</a>
+<a class="lv2" data-id="h13" href="#">0.3 四层可交付（卡住时按层排查，不要跳层）</a>
+<a class="lv2" data-id="h14" href="#">0.4 三种走法，先选路再动手</a>
+<a class="lv2" data-id="h15" href="#">0.5 本章要点</a>
+<a class="lv1" data-id="h16" href="#">第 1 章 测绘：套件分层与信任边界</a>
+<a class="lv2" data-id="h17" href="#">1.1 六层表（先把这张表填满，再动手）</a>
+<a class="lv2" data-id="h18" href="#">1.2 授权闸门到底装在哪一层：三个候选位置</a>
+<a class="lv2" data-id="h19" href="#">1.3 一次完整会话的时序（照这个顺序摆你的实验）</a>
+<a class="lv2" data-id="h20" href="#">1.4 三种架构形态与还原难度</a>
+<a class="lv2" data-id="h21" href="#">1.5 本章要点</a>
+<a class="lv1" data-id="h22" href="#">第 2 章 样本与静态面：把壳、驱动、域名表翻出来</a>
+<a class="lv2" data-id="h23" href="#">2.1 样本清单与代次冻结（不冻结代次，后面所有结论都会漂）</a>
+<a class="lv2" data-id="h24" href="#">2.2 三层静态入口：从外到内，每层看不同东西</a>
+<a class="lv3" data-id="h25" href="#">字符串提取（PowerShell 版，够用且不依赖外部工具）</a>
+<a class="lv2" data-id="h26" href="#">2.3 壳与混淆分诊表（决定你后面走哪条路）</a>
+<a class="lv2" data-id="h27" href="#">2.4 域名与端点表的存放形态（六种，逐种给判别法）</a>
+<a class="lv2" data-id="h28" href="#">2.5 驱动与内核模块：多数时候你不需要碰它</a>
+<a class="lv2" data-id="h29" href="#">2.6 静态的边界：三件永远看不到的事</a>
+<a class="lv2" data-id="h30" href="#">2.7 本章要点</a>
+<a class="lv1" data-id="h31" href="#">第 3 章 网络发现：把 API_BASE 从流量里钉死</a>
+<a class="lv2" data-id="h32" href="#">3.1 拦截层选择：五条路，选错就白跑一周</a>
+<a class="lv2" data-id="h33" href="#">3.2 TLS 与 pinning：先判"校验在哪一层"，再谈绕过</a>
+<a class="lv2" data-id="h34" href="#">3.3 端点枚举：从抓包到端点表</a>
+<a class="lv2" data-id="h35" href="#">3.4 域名轮询与备用列表：怎么证明"还有别的域名"</a>
+<a class="lv2" data-id="h36" href="#">3.5 时钟与延迟：三个钟，只有一个能用</a>
+<a class="lv2" data-id="h37" href="#">3.6 本章要点</a>
+<a class="lv1" data-id="h38" href="#">第 4 章 加密与签名：从密文回到明文</a>
+<a class="lv2" data-id="h39" href="#">4.1 算法指纹：不看函数名，看常量与结构</a>
+<a class="lv2" data-id="h40" href="#">4.2 密钥从哪来：四种形态，各有识别法</a>
+<a class="lv2" data-id="h41" href="#">4.3 层次顺序：六种排列，用"长度 + 魔数"五分钟判掉</a>
+<a class="lv2" data-id="h42" href="#">4.4 签名：拼接顺序是唯一难点</a>
+<a class="lv2" data-id="h43" href="#">4.5 时间戳与 NONCE：重放实验设计</a>
+<a class="lv2" data-id="h44" href="#">4.6 解不出时的正确行为（这一节是纪律，不是技巧）</a>
+<a class="lv2" data-id="h45" href="#">4.7 本章要点</a>
+<a class="lv1" data-id="h46" href="#">第 5 章 端点契约还原：把 API 变成可实现的规格</a>
+<a class="lv2" data-id="h47" href="#">5.1 契约表：把"我知道这个接口"变成"我能实现这个接口"</a>
+<a class="lv2" data-id="h48" href="#">5.2 字段语义命名三步法：先算、再查、再投票</a>
+<a class="lv2" data-id="h49" href="#">5.3 错误码字典：双层错误，别只看一层</a>
+<a class="lv2" data-id="h50" href="#">5.4 状态字段 vs 派生字段：这决定你数据库里要存什么</a>
+<a class="lv2" data-id="h51" href="#">5.5 版本分歧：同一端点两套字段集</a>
+<a class="lv2" data-id="h52" href="#">5.6 报数字的正确形状：分母、Δ、未命名占比</a>
+<a class="lv2" data-id="h53" href="#">5.7 本章要点</a>
+<a class="lv1" data-id="h54" href="#">第 6 章 授权账本：卡密、时间与设备绑定</a>
+<a class="lv2" data-id="h55" href="#">6.1 卡密模型：先分类，再谈字段</a>
+<a class="lv2" data-id="h56" href="#">6.2 扣时发生在哪：五个候选点，用三个实验定死</a>
+<a class="lv3" data-id="h57" href="#">断线保底的正确实现</a>
+<a class="lv2" data-id="h58" href="#">6.3 顶号、并发与心跳租约</a>
+<a class="lv2" data-id="h59" href="#">6.4 设备绑定：HWID 的组成与更换配额</a>
+<a class="lv2" data-id="h60" href="#">6.5 状态机：把卡的一生画成图</a>
+<a class="lv2" data-id="h61" href="#">6.6 对账：让账本自己说话</a>
+<a class="lv2" data-id="h62" href="#">6.7 本章要点</a>
+<a class="lv1" data-id="h63" href="#">第 7 章 配置与更新下发：CFG_BLOB 与 OFFSETS_TABLE</a>
+<a class="lv2" data-id="h64" href="#">7.1 CFG_BLOB 的解剖：四层，每层都有判据</a>
+<a class="lv2" data-id="h65" href="#">7.2 OFFSETS_TABLE：偏移表与客户端版本的同代约束</a>
+<a class="lv2" data-id="h66" href="#">7.3 版本协商与强制更新：三个字段谁说话</a>
+<a class="lv2" data-id="h67" href="#">7.4 灰度与回滚：键的设计决定你能不能救火</a>
+<a class="lv2" data-id="h68" href="#">7.5 分发：CDN、对象存储与缓存头</a>
+<a class="lv2" data-id="h69" href="#">7.6 校验与降级：签名失败时客户端会干什么</a>
+<a class="lv2" data-id="h70" href="#">7.7 本章要点</a>
+<a class="lv1" data-id="h71" href="#">第 8 章 心跳、在线态与远程指令</a>
+<a class="lv2" data-id="h72" href="#">8.1 心跳的三个作用：一个请求，三份语义</a>
+<a class="lv2" data-id="h73" href="#">8.2 超时与离线判定：两套判定会打架</a>
+<a class="lv2" data-id="h74" href="#">8.3 强制下线与踢人：幂等是唯一难点</a>
+<a class="lv2" data-id="h75" href="#">8.4 指令队列：拉取式与推送式</a>
+<a class="lv2" data-id="h76" href="#">8.5 时钟漂移与"时间加速"：自建侧必须处理的三件事</a>
+<a class="lv2" data-id="h77" href="#">8.6 本章要点</a>
+<a class="lv1" data-id="h78" href="#">第 9 章 客户端副产物：服务端必须产出「真能用」的数据</a>
+<a class="lv2" data-id="h79" href="#">9.1 偏移表/特征码：正确性只能用下游产物判</a>
+<a class="lv2" data-id="h80" href="#">9.2 假成功的四种形态（每一种都真实发生过）</a>
+<a class="lv2" data-id="h81" href="#">9.3 最小可验证切片的纪律</a>
+<a class="lv2" data-id="h82" href="#">9.4 回归矩阵：版本 × 渠道 × 卡类型</a>
+<a class="lv2" data-id="h83" href="#">9.5 本章要点</a>
+<a class="lv1" data-id="h84" href="#">第 10 章 卡盟与分销对接</a>
+<a class="lv2" data-id="h85" href="#">10.1 卡盟的三种交互与状态机</a>
+<a class="lv2" data-id="h86" href="#">10.2 卡密生成规则</a>
+<a class="lv2" data-id="h87" href="#">10.3 回调的签名与重放</a>
+<a class="lv2" data-id="h88" href="#">10.4 结算与对账</a>
+<a class="lv2" data-id="h89" href="#">10.5 幂等与超时补偿</a>
+<a class="lv2" data-id="h90" href="#">10.6 本章要点</a>
+<a class="lv1" data-id="h91" href="#">第 11 章 风控识别面：客户端上报了什么，封禁怎么下发</a>
+<a class="lv2" data-id="h92" href="#">11.1 客户端上报通道清单</a>
+<a class="lv2" data-id="h93" href="#">11.2 服务端可观测的"非人类"特征</a>
+<a class="lv2" data-id="h94" href="#">11.3 封禁名单怎么下发（三种形态）</a>
+<a class="lv2" data-id="h95" href="#">11.4 双端并存时的状态不一致</a>
+<a class="lv2" data-id="h96" href="#">11.5 本章要点</a>
+<a class="lv1" data-id="h97" href="#">第 12 章 自建实现：从录音回放到可上线</a>
+<a class="lv2" data-id="h98" href="#">12.1 三阶段路线（不要跳阶段）</a>
+<a class="lv2" data-id="h99" href="#">12.2 选型与最小表结构</a>
+<a class="lv2" data-id="h100" href="#">12.3 并发、限流与防刷</a>
+<a class="lv2" data-id="h101" href="#">12.4 部署拓扑</a>
+<a class="lv2" data-id="h102" href="#">12.5 观测：三个必须有、两个不要有</a>
+<a class="lv2" data-id="h103" href="#">12.6 割接与回滚</a>
+<a class="lv2" data-id="h104" href="#">12.7 本章要点</a>
+<a class="lv1" data-id="h105" href="#">第 13 章 一页速查</a>
+<a class="lv2" data-id="h106" href="#">13.1 十阶段（从零到可运维）</a>
+<a class="lv2" data-id="h107" href="#">13.2 开工前 8 项自检（缺一项 ⇒ 结果作废）</a>
+<a class="lv2" data-id="h108" href="#">13.3 报数字前 5 项检查</a>
+<a class="lv2" data-id="h109" href="#">13.4 三条停手信号</a>
+<a class="lv2" data-id="h110" href="#">13.5 交付验收（十项，缺一项不算还原）</a>
+<a class="lv1" data-id="h111" href="#">附录 A 报文样本库与字段索引规范</a>
+<a class="lv2" data-id="h112" href="#">A.1 目录规范</a>
+<a class="lv2" data-id="h113" href="#">A.2 一行记录的字段（照抄）</a>
+<a class="lv2" data-id="h114" href="#">A.3 字段索引（INDEX.md 的表头）</a>
+<a class="lv2" data-id="h115" href="#">A.4 三条纪律</a>
+<a class="lv1" data-id="h116" href="#">附录 B 加密/签名速查与代码骨架</a>
+<a class="lv2" data-id="h117" href="#">B.1 指纹速查（复制到你的笔记里）</a>
+<a class="lv2" data-id="h118" href="#">B.2 AES-CBC 解密骨架（含 IV 两种位置）</a>
+<a class="lv2" data-id="h119" href="#">B.3 RC4（自研实现常见，注意它与标准实现可能差一个字节）</a>
+<a class="lv2" data-id="h120" href="#">B.4 签名候选枚举（4.4 的实现）</a>
+<a class="lv2" data-id="h121" href="#">B.5 解不出时：写 undecodable + 保留原文件（4.6）</a>
+<a class="lv1" data-id="h122" href="#">附录 C 授权数据模型（完整版）</a>
+<a class="lv1" data-id="h123" href="#">附录 D 部署拓扑、容灾与灰度</a>
+<a class="lv2" data-id="h124" href="#">D.1 nginx 片段（含配置类缓存策略）</a>
+<a class="lv2" data-id="h125" href="#">D.2 容灾检查表</a>
+<a class="lv2" data-id="h126" href="#">D.3 灰度键设计（7.4 的落地）</a>
+<a class="lv1" data-id="h127" href="#">附录 E 换目标迁移检查表</a>
+</nav>
+<main><h1 id="h1">外挂服务器逆向还原方法论（通用 · 去标识版）</h1>
+<blockquote>一句话：<strong>客户端只是半个系统</strong>。外挂能不能用、能用多久、什么时候被停，最终由它背后那台服务器决定。本文讲的是怎么把那台服务器「重新造出来」，并且造到能对账、能运维、能换版本。<br><br>适用范围：任意以「客户端 + 私有后台」形态分发的外挂套件。所有身份、域名、密钥、编号一律占位化；保留的只有<strong>流程、判据与失败形态</strong>。</blockquote>
+<hr>
+<h2 id="h2">阅读约定（先读这一节）</h2>
+<h3 id="h3">1. 证据标注规则</h3>
+<p>文中每处结论带下列标记之一，<strong>不带标记的段落是流程说明，不是结论</strong>：</p>
+<table><thead><tr><th>标记</th><th>含义</th><th>复核方式</th></tr></thead><tbody><tr><td>【判据】</td><td>可执行、可观测，别人照做能复现</td><td>照抄命令/步骤，看结果是否同向</td></tr><tr><td>【实测】</td><td>在真实样本上跑出来的数</td><td>样本代次写在括号里</td></tr><tr><td>【反例】</td><td>骗过一次的结论，以及它怎么被证伪</td><td>记住形态，不要记结论</td></tr><tr><td>【估算】</td><td>有前提的数字，前提写在括号里</td><td>前提变了数就作废</td></tr></tbody></table>
+<h3 id="h4">2. 去标识与其边界</h3>
+<ul><li>正文<strong>不出现</strong>任何目标的名字、域名、IP、密钥、卡密、内部编号；一律换成下表常量。</li><li>保留公共技术名词（HTTP/TLS/JSON/protobuf/AES/RC4/TEA/gzip/zlib、Frida/x64dbg/Ghidra/IDA/Wireshark/Charles、VMProtect/Themida、scudo/jemalloc 等）—— 这些不指向任何具体目标，删掉只会降低可迁移性。</li><li><strong>编号类信息一律标注「换目标必须重新枚举」</strong>：卡密校验位、消息号、错误码、偏移表字段，都是目标私有的。</li></ul>
+<h3 id="h5">3. 三条术语改名（务必先记住）</h3>
+<table><thead><tr><th>本文用词</th><th>指什么</th><th>不要理解成</th></tr></thead><tbody><tr><td><strong>服务端</strong></td><td>外挂<strong>自己</strong>的后台（授权、配置、更新、心跳、卡盟）</td><td>游戏服务器</td></tr><tr><td><strong>客户端</strong></td><td>外挂本体：loader + 注入模块 + UI + 网络层</td><td>游戏客户端</td></tr><tr><td><strong>宿主</strong></td><td>被辅助的游戏进程</td><td>外挂进程</td></tr></tbody></table>
+<blockquote>这三条改名是本文最重要的一句话。<strong>搞错主体，后面所有判据都会指向错误的对象</strong>：你会去解游戏的协议，而真正卡住你的是外挂自己的授权端点。</blockquote>
+<h3 id="h6">4. 占位常量表（正文只用这些）</h3>
+<table><thead><tr><th>常量</th><th>含义</th><th>出现位置</th></tr></thead><tbody><tr><td><code>TARGET</code></td><td>目标外挂套件</td><td>全局</td></tr><tr><td><code>CHEAT_CORE</code></td><td>核心注入模块 / 驱动（.dll / .sys）</td><td>L1/L2</td></tr><tr><td><code>LICENSE_KEY</code></td><td>卡密 / 激活码 / 兑换码</td><td>L3/L5</td></tr><tr><td><code>HWID</code></td><td>设备指纹（多字段组合）</td><td>L3/L5</td></tr><tr><td><code>API_BASE</code> / <code>SERVER_HOST</code></td><td>授权域名 / 备用列表</td><td>L4</td></tr><tr><td><code>SESSION_TOKEN</code></td><td>登录后会话令牌</td><td>L4/L5</td></tr><tr><td><code>CFG_BLOB</code></td><td>配置加密体（偏移表、脚本、特征码、通知）</td><td>L5→L2</td></tr><tr><td><code>OFFSETS_TABLE</code></td><td>偏移/特征码表（结构体数组或 JSON）</td><td>CFG_BLOB 内部</td></tr><tr><td><code>SIG_KEY</code></td><td>签名密钥（可能有多把，按端点分）</td><td>L4/L5</td></tr><tr><td><code>CARDMALL_API</code></td><td>卡盟（发卡平台）接口</td><td>L5 外部</td></tr><tr><td><code>CLIENT_VER</code> / <code>CHANNEL</code></td><td>客户端版本 / 渠道号</td><td>L4</td></tr><tr><td><code>RESULT_DIR</code> / <code>CAP_FILE</code> / <code>PCAP_FILE</code></td><td>产物目录 / 落盘记录 / 抓包文件</td><td>工程</td></tr><tr><td><code>REPLAY_TS</code> / <code>NONCE</code></td><td>请求时间戳 / 一次性随机数</td><td>L4</td></tr><tr><td><code>MSG_LOGIN_OK</code> <code>MSG_AUTH_FAIL</code> <code>MSG_CFG_PUSH</code> <code>MSG_HEARTBEAT_ACK</code> <code>MSG_FORCE_LOGOUT</code> <code>MSG_UPDATE_AVAIL</code></td><td>语义化消息常量（<strong>编号须重新枚举</strong>）</td><td>L4/L5</td></tr></tbody></table>
+<hr>
+<h2 id="h7">全书地图</h2>
+<table><thead><tr><th>章</th><th>标题</th><th>一句话产出</th></tr></thead><tbody><tr><td>0</td><td>总纲</td><td>定清「还原到什么程度算成功」，以及三条走法怎么选</td></tr><tr><td>1</td><td>测绘</td><td>六层架构表 + 授权闸门到底装在哪一层</td></tr><tr><td>2</td><td>样本与静态面</td><td>壳、驱动、域名表的存放形态全翻一遍</td></tr><tr><td>3</td><td>网络发现</td><td>把 <code>API_BASE</code> 从流量里钉死，端点表成型</td></tr><tr><td>4</td><td>加密与签名</td><td>密文回明文，且知道「为什么解得出/解不出」</td></tr><tr><td>5</td><td>端点契约</td><td>每个端点变成可实现、可测的规格</td></tr><tr><td>6</td><td>授权账本</td><td>卡密、扣时、顶号、设备绑定的正确语义</td></tr><tr><td>7</td><td>配置与更新</td><td><code>CFG_BLOB</code> 与 <code>OFFSETS_TABLE</code> 的同代约束</td></tr><tr><td>8</td><td>心跳与指令</td><td>在线态、踢人、指令队列的幂等</td></tr><tr><td>9</td><td>客户端副产物</td><td>「服务端返回 200」≠「客户端真的能用」</td></tr><tr><td>10</td><td>卡盟与分销</td><td>发卡/查卡/回调/结算的闭环与对账</td></tr><tr><td>11</td><td>风控识别面</td><td>客户端上报什么、封禁名单怎么下发</td></tr><tr><td>12</td><td>自建实现</td><td>回放 → 状态机 → 可上线的最小路径</td></tr><tr><td>13</td><td>一页速查</td><td>十阶段 + 自检 + 停手 + 验收</td></tr><tr><td>A</td><td>样本库与字段索引</td><td>产物规范，让三个月后的自己能复查</td></tr><tr><td>B</td><td>加密/签名速查</td><td>算法指纹表 + 代码骨架</td></tr><tr><td>C</td><td>授权数据模型</td><td>表结构 + 对账 SQL</td></tr><tr><td>D</td><td>部署与容灾</td><td>多域名、证书、灰度、监控</td></tr><tr><td>E</td><td>换目标迁移</td><td>把本文套到下一个 <code>TARGET</code> 的检查表</td></tr></tbody></table>
+<hr>
+<h1 id="h8">第 0 章 总纲：从「外挂能用」到「服务器归我」</h1>
+<h2 id="h9">0.1 三条前提（不成立就别往下走）</h2>
+<p>外挂服务端可还原，本质依赖三件事。<strong>每条都要有实证动作，不能靠"应该是"</strong>：</p>
+<table><thead><tr><th>前提</th><th>内容</th><th>实证动作（10 分钟内可做）</th><th>不成立时的症状</th></tr></thead><tbody><tr><td><strong>A</strong></td><td>客户端把「能不能用」的判定交给了服务端</td><td>断网启动、改 hosts 指向黑洞 IP、把 <code>API_BASE</code> 指到本地 mock，三次分别看哪些功能先死</td><td>断网照样透视/自瞄 → 判定在本地，还原目标从"服务端"变成"客户端校验"（另一套方法论）</td></tr><tr><td><strong>B</strong></td><td>协议可观测</td><td>起代理抓一次登录，能看到<strong>请求体长度稳定</strong>且时间顺序可复现</td><td>全程只有 TLS 握手成功、body 长度恒定极短 → 可能是 DNS/隐蔽信道，或走了驱动层隧道</td></tr><tr><td><strong>C</strong></td><td>授权判定可被替代</td><td>让 mock 返回一个自造的 <code>MSG_LOGIN_OK</code>，看客户端是否进入下一步 UI</td><td>返回什么都停在原地 → 判定绑了签名/证书/时间/硬件，需要逐项拆</td></tr></tbody></table>
+<blockquote>【判据】三条前提各自有实证动作。<strong>没有做过这三个实验就开始解协议，是最常见的白干两周。</strong></blockquote>
+<h3 id="h10">前提 A 的实证方式（做法值得照抄，不需要照抄结论）</h3>
+<p>不要一上来抓包。先做<strong>减法</strong>：</p>
+<ol><li><strong>全断网</strong>（禁用网卡）启动客户端 → 记录它停在哪一屏，报什么错。</li><li><strong>通网但黑洞</strong>（<code>API_BASE</code> 指向 <code>127.0.0.1:1</code>）→ 记录它停在哪一屏。</li><li><strong>通网但返回空 200</strong>（本地起一个只会回 <code>200 + {}</code> 的服务）→ 记录它停在哪一屏。</li></ol>
+<p>三次的<strong>停点差异</strong>就是信息量：</p>
+<ul><li>三次都停在登录窗 → 授权在服务端，且登录是硬门（最理想）。</li><li>断网停、黑洞不停 → 域名列表有本地兜底或离线缓存，注意"离线可用时长"字段。</li><li>三次都进得去、功能却全都失效 → 授权只是软门，真正的门在 <code>CFG_BLOB</code> 里（见第 7 章）。</li></ul>
+<h3 id="h11">前提 C 的形状（最关键的一段）</h3>
+<p>「可被替代」不等于「返回 true 就行」。它通常有三个附着点，必须逐个识别：</p>
+<table><thead><tr><th>附着点</th><th>形态</th><th>判别方法</th></tr></thead><tbody><tr><td>签名</td><td>响应带 <code>sign</code> 字段，客户端本地验</td><td>改 body 不改 sign → 客户端报"数据异常"而非"授权失败"</td></tr><tr><td>时间</td><td>响应带 <code>expire</code> / <code>server_ts</code>，客户端比对本地时间</td><td>把 <code>expire</code> 改成过去 → 立即失效，说明时间被采信</td></tr><tr><td>硬件</td><td>响应回显 <code>HWID</code>，客户端与本地指纹比对</td><td>回显错一个字节 → 提示"设备异常"</td></tr></tbody></table>
+<p>【反例】曾把一个登录响应整体照抄，只把 <code>code</code> 从 1001 改成 0，客户端弹出"授权成功"却在 3 秒后自动退出。原因：<code>expire</code> 字段仍是旧值（已过期），客户端在拿到 <code>MSG_LOGIN_OK</code> 后<strong>立刻做了一次本地到期校验</strong>。教训：<strong>"成功"这个消息本身也带状态，不能只改结果码</strong>。</p>
+<h2 id="h12">0.2 成功判据五档（报进度只能报档，不能报"差不多了"）</h2>
+<table><thead><tr><th>档</th><th>名称</th><th>唯一判据</th><th>典型假成功</th></tr></thead><tbody><tr><td><strong>D0</strong></td><td>能连</td><td>服务端日志出现来自客户端的完整请求行 + 请求体</td><td>抓到自己代理的请求，但客户端并未真正发出（代理空转）</td></tr><tr><td><strong>D1</strong></td><td>能登录</td><td>客户端离开登录窗，进入主界面</td><td>UI 只是隐藏了登录框（热键/参数跳过）</td></tr><tr><td><strong>D2</strong></td><td>token 被接受</td><td>后续<strong>至少两个</strong>端点用该 token 返回业务数据（非"授权失败"）</td><td>一个端点放行、其余全拒（token 只是本地字符串）</td></tr><tr><td><strong>D3</strong></td><td>配置被接受</td><td>客户端把 <code>CFG_BLOB</code> 应用后，功能<strong>下游产物</strong>真的变了（画面/状态/日志）</td><td>返回 200、长度对、内容错，客户端静默丢弃</td></tr><tr><td><strong>D4</strong></td><td>账本自洽</td><td>同一卡密连续心跳 N 次，剩余时间单调递减且与真实时长一致（误差 &lt;2%）</td><td>扣时发生在登录而不在心跳 → 断线不扣，账目虚高</td></tr><tr><td><strong>D5</strong></td><td>可运维</td><td>换 <code>CLIENT_VER</code>、换 <code>CHANNEL</code>、踢人、灰度回滚各跑一遍不炸</td><td>单版本能跑，换一版全崩</td></tr></tbody></table>
+<blockquote>【判据】<strong>任何"还原完成"的说法必须落到 D3 以上</strong>。D1/D2 属于"界面过了"，是最容易自我欺骗的两档。</blockquote>
+<h2 id="h13">0.3 四层可交付（卡住时按层排查，不要跳层）</h2>
+<table><thead><tr><th>层</th><th>内容</th><th>判断"这层做完了"</th></tr></thead><tbody><tr><td><strong>契约层</strong></td><td>端点表、字段映射、错误码字典</td><td>任一抓包能 100% 落到某个端点与字段，未命名字段占比 &lt;20% 且有清单</td></tr><tr><td><strong>状态层</strong></td><td>会话、卡密、剩余时间、顶号、指令队列</td><td>重启服务端后，客户端无需重新登录仍能继续（或明确会断，且断得符合预期）</td></tr><tr><td><strong>数据层</strong></td><td><code>CFG_BLOB</code> 生成、<code>OFFSETS_TABLE</code> 版本化、更新包分发</td><td>客户端接受你的配置并<strong>功能生效</strong>；换一版客户端能生成对应代次</td></tr><tr><td><strong>运维层</strong></td><td>多域名、证书、健康检查、监控、回滚</td><td>主域名拔掉，备用域名 30 秒内接上；灰度开关一改即生效</td></tr></tbody></table>
+<p>【反例】一个团队把契约层做到 95%，状态层完全空缺：登录成功、配置下发成功、功能也生效，但<strong>每次重启服务端所有在线用户全部掉线且被扣满一小时</strong>。用户投诉"掉线扣时"，最后不是协议问题，是状态层没做持久化。</p>
+<h2 id="h14">0.4 三种走法，先选路再动手</h2>
+<table><thead><tr><th>走法</th><th>做法</th><th>适用判据</th><th>死法</th></tr></thead><tbody><tr><td><strong>A 全量重写</strong></td><td>自己实现全部端点，客户端只认你的服务器</td><td>端点 ≤ 30 且状态字段少；能拿到全部 <code>CFG_BLOB</code> 生成逻辑</td><td>端点其实更多（藏在更新包里）；漏一个冷门端点导致某功能永久灰掉</td></tr><tr><td><strong>B 差分代理</strong></td><td>中间人转发到上游真服，只改写必要字段</td><td>上游仍可用；你只需要改授权/时间/配置</td><td>上游一改协议全崩；TLS pinning 让你无法中间人</td></tr><tr><td><strong>C 录音回放</strong></td><td>先录下全部真实响应，按请求指纹回放</td><td>只要"先跑起来"，用来做客户端行为观察</td><td>回放态永远无法处理"第一次见到的请求"；时间字段过期后集体失效</td></tr></tbody></table>
+<p><strong>推荐顺序：C → A，跳过 B。</strong> 理由：B 依赖上游存活，而你做这件事的前提通常正是上游不可用/不可控；C 用来<strong>学习</strong>客户端如何消费响应（第 9 章的假成功识别必须在 C 态做），A 才是交付物。</p>
+<p>【判据】选路的唯一硬指标：<strong>你能不能自己产出 <code>CFG_BLOB</code></strong>。能 → 走 A；不能 → 先 C 观察，把 <code>CFG_BLOB</code> 的内部 schema 反推出来再谈 A。</p>
+<h2 id="h15">0.5 本章要点</h2>
+<ol><li>三条前提各有实证动作，10 分钟能做完，<strong>先做再加</strong>。</li><li>授权有三附着点（签名/时间/硬件），改结果码不等于改授权。</li><li>进度只报 D0–D5 五档，D3 以下不算还原。</li><li>走法按「能否自产 <code>CFG_BLOB</code>」选，不要按"哪个听起来快"选。</li></ol>
+<hr>
+<h1 id="h16">第 1 章 测绘：套件分层与信任边界</h1>
+<h2 id="h17">1.1 六层表（先把这张表填满，再动手）</h2>
+<table><thead><tr><th>层</th><th>名称</th><th>典型产物</th><th>观测手段</th><th>还原时是否要碰</th></tr></thead><tbody><tr><td><strong>L0</strong></td><td>安装/更新/loader</td><td>安装器、更新器、启动器、服务注册脚本</td><td>文件系统 diff、注册表 diff、服务列表</td><td>通常只观察：它决定"谁被加载"</td></tr><tr><td><strong>L1</strong></td><td>驱动/内核模块</td><td><code>.sys</code>、内核回调、IOCTL 面</td><td>驱动加载日志、<code>sc query</code>、签名信息</td><td>多数不碰（见 2.5）</td></tr><tr><td><strong>L2</strong></td><td>注入与游戏交互</td><td>手动映射的 DLL、hook 表、<code>OFFSETS_TABLE</code> 消费者</td><td>进程模块列表、内存扫描、功能开关</td><td>要碰：配置正确性在这里被消费</td></tr><tr><td><strong>L3</strong></td><td>业务 UI</td><td>登录窗、卡密输入、到期提示、公告</td><td>窗口枚举、控件文本、热键</td><td>要碰：它是"用户可见的判定结果"</td></tr><tr><td><strong>L4</strong></td><td>网络层</td><td>域名列表、加密/签名、重试与轮询</td><td>抓包、代理、hook send/recv</td><td>核心战场</td></tr><tr><td><strong>L5</strong></td><td>服务端</td><td>授权、配置、更新、心跳、指令、统计、卡盟</td><td>只能从 L4 侧反推 + 差分实验</td><td>交付物</td></tr></tbody></table>
+<p><strong>填表要求</strong>：每一层都要写出<strong>具体文件名/进程名/端口号</strong>（脱敏后写进你的私有笔记，不进本文）。填不满的格子，就是你接下来两天的作业。</p>
+<h2 id="h18">1.2 授权闸门到底装在哪一层：三个候选位置</h2>
+<p>外挂的"门"不止一道。<strong>绝大多数还原失败，是把软门当成硬门，或反之</strong>：</p>
+<table><thead><tr><th>位置</th><th>形态</th><th>打桩方式</th><th>过了它的现象</th></tr></thead><tbody><tr><td><strong>登录前门</strong></td><td>卡密 → <code>SESSION_TOKEN</code></td><td>mock 登录端点返回合法 token</td><td>离开登录窗</td></tr><tr><td><strong>配置后门</strong></td><td><code>CFG_BLOB</code> 内带 <code>license</code> 字段 / 水印 / 有效期</td><td>改写 blob 内该字段后重新加密</td><td>功能从灰变亮</td></tr><tr><td><strong>注入前门</strong></td><td>驱动加载前校验时间/签名/白名单</td><td>打桩时间源、伪造返回码</td><td>注入模块被加载（模块列表出现 <code>CHEAT_CORE</code>）</td></tr></tbody></table>
+<blockquote>【判据】判别"门在哪一层"的唯一可靠方法：<strong>逐层打桩，看功能在哪一层开始可用</strong>。三层都打桩才可用 → 三道门都在；只有第一层打桩就可用 → 后两道是软门（往往是营销话术而非技术门）。</blockquote>
+<h2 id="h19">1.3 一次完整会话的时序（照这个顺序摆你的实验）</h2>
+<pre><code>[T+0.0s]  L0 启动器拉起 CHEAT_CORE（或先加载驱动）
+[T+0.3s]  L4 读本地域名列表 → 选第一个可用 API_BASE
+[T+0.5s]  L4 POST /auth/login   {LICENSE_KEY, HWID, CLIENT_VER, REPLAY_TS, NONCE, sign}
+[T+0.9s]  L5 → MSG_LOGIN_OK {SESSION_TOKEN, expire, cfg_ver, notice, ver_new}
+[T+1.0s]  L3 关闭登录窗，读 cfg_ver
+[T+1.1s]  L4 GET  /cfg/CFG_BLOB?ver=…&amp;token=…
+[T+1.4s]  L5 → CFG_BLOB（编码→压缩→加密）
+[T+1.5s]  L2 解包 → 应用 OFFSETS_TABLE → 等待游戏窗口
+[T+2.0s]  L0 检查 ver_new → 若 force=1 则强制更新（此时功能尚未注入）
+[T+2.5s]  L2 注入宿主 → hook 生效
+[T+60s ]  L4 POST /auth/beat {token, HWID, REPLAY_TS} → MSG_HEARTBEAT_ACK {remain}
+[T+…  ]  L5 可随时下发 MSG_FORCE_LOGOUT / MSG_UPDATE_AVAIL</code></pre>
+<p><strong>这张时序图有三个用途</strong>：① 决定你的实验顺序（必须先让 T+0.5 成立，否则后面全是空跑）；② 决定你的假成功判据（T+1.5 才是"配置生效"点）；③ 决定你的日志字段（每个 T 都要有一条可对齐的日志）。</p>
+<h2 id="h20">1.4 三种架构形态与还原难度</h2>
+<table><thead><tr><th>形态</th><th>特征</th><th>还原难点</th><th>端点量级</th></tr></thead><tbody><tr><td><strong>云授权 + 本地校验</strong></td><td>登录问服务器，之后靠 token 本地放行</td><td>token 的<strong>有效期语义</strong>（谁在扣时）</td><td>3–8</td></tr><tr><td><strong>纯云授权</strong></td><td>每次动作都问服务器（拉配置、开功能、查到期）</td><td>端点全，但状态最简单（无本地缓存）</td><td>10–40</td></tr><tr><td><strong>授权与配置同源</strong></td><td><code>CFG_BLOB</code> 里带 license/到期/白名单</td><td>最容易假成功：登录过了、配置也过了，功能就是不亮</td><td>3–6，但 blob 内部复杂</td></tr></tbody></table>
+<p>【反例】把「授权与配置同源」的套件当成「云授权」做：登录端点做完就以为完工，结果客户端每次启动都重新拉 <code>CFG_BLOB</code>，而 blob 里带 <code>expire_ts</code>，mock 的 blob 没这个字段 → 客户端解析失败 → <strong>功能全灰但无任何报错</strong>（第 9 章会反复出现这个形态）。</p>
+<h2 id="h21">1.5 本章要点</h2>
+<ol><li>六层表填满再动手，填不满的格子就是作业。</li><li>三道门逐层打桩，别把软门当硬门。</li><li>时序图定实验顺序，<strong>T+0.5 不成立时别做 T+1.5</strong>。</li><li>「授权与配置同源」是最容易假成功的形态，先假定自己是这一种。</li></ol>
+<h1 id="h22">第 2 章 样本与静态面：把壳、驱动、域名表翻出来</h1>
+<h2 id="h23">2.1 样本清单与代次冻结（不冻结代次，后面所有结论都会漂）</h2>
+<p>拿到手的通常不是一个 exe，而是一坨。<strong>先列清单，再谈分析</strong>：</p>
+<table><thead><tr><th>类别</th><th>典型文件</th><th>为什么必须留档</th></tr></thead><tbody><tr><td>安装包</td><td><code>setup_*.exe</code>（NSIS/Inno）</td><td>里面往往带<strong>完整目录结构</strong>和默认配置</td></tr><tr><td>更新器</td><td><code>updater.exe</code> + 清单文件</td><td>暴露<strong>版本协商协议</strong>（第 7 章）</td></tr><tr><td>启动器</td><td><code>loader.exe</code></td><td>暴露域名列表与更新判定</td></tr><tr><td>核心模块</td><td><code>CHEAT_CORE.dll</code>（可能多份，按游戏分）</td><td>暴露加密常量、端点路径、字段名</td></tr><tr><td>驱动</td><td><code>*.sys</code>（若有）</td><td>暴露 IOCTL 面与加载方式</td></tr><tr><td>脚本/配置</td><td><code>.lua</code> <code>.dat</code> <code>.bin</code> <code>.json</code></td><td>暴露 <code>OFFSETS_TABLE</code> 与功能开关</td></tr><tr><td>资源</td><td>图片、字体、语言包</td><td>藏域名/公告/更新地址</td></tr></tbody></table>
+<p><strong>代次冻结三件套</strong>（三件都要，缺一件不算冻结）：</p>
+<pre><code># ① 哈希 —— 唯一身份
+Get-ChildItem -Recurse -File | Get-FileHash -Algorithm SHA256 |
+  Select-Object Hash,Path | Export-Csv .\RESULT_DIR\manifest_sha256.csv -NoTypeInformation -Encoding UTF8
+
+# ② 时间 —— 排序与"哪份新"的判据
+Get-ChildItem -Recurse -File | Select-Object Length,LastWriteTime,FullName |
+  Sort-Object LastWriteTime -Descending | Export-Csv .\RESULT_DIR\manifest_mtime.csv -NoTypeInformation -Encoding UTF8
+
+# ③ 版本 —— 客户端自报的 CLIENT_VER 从哪来
+(Get-Item .\loader.exe).VersionInfo | Format-List FileVersion,ProductVersion,CompanyName</code></pre>
+<blockquote>【判据】任何结论必须绑定到「SHA256 前 8 位 + 抓包时间」。只写"最新版"的笔记，三周后一定作废。</blockquote>
+<h2 id="h24">2.2 三层静态入口：从外到内，每层看不同东西</h2>
+<table><thead><tr><th>层</th><th>看什么</th><th>一眼能拿到的</th><th>常被忽略的</th></tr></thead><tbody><tr><td><strong>文件层</strong></td><td>节表、导入表、资源、版本信息</td><td>用了哪些网络库（WinHTTP/ws2_32/libcurl）、有无驱动加载 API</td><td><strong>TLS 回调</strong>（在 <code>main</code> 之前跑，反调试常驻这里）</td></tr><tr><td><strong>字符串层</strong></td><td>ASCII / UTF-16 字符串、宽字符拼接</td><td>端点路径、字段名、错误提示原文、域名片段</td><td>拼接式字符串（<code>api.</code> + <code>xxx</code> + <code>.com</code> 分三段存）</td></tr><tr><td><strong>内存层</strong></td><td>运行后 dump 出来的镜像</td><td>解壳后的真实代码、运行时解密出的域名表、真实 <code>OFFSETS_TABLE</code></td><td>磁盘上是空壳，内存里才是真身</td></tr></tbody></table>
+<p>【判据】磁盘样本里"看起来没有网络代码"时，<strong>不要</strong>下"它不联网"的结论；先 dump 内存镜像再判定（见 3.1 的镜像获取法）。</p>
+<h3 id="h25">字符串提取（PowerShell 版，够用且不依赖外部工具）</h3>
+<pre><code>$f = '.\CHEAT_CORE.dll'
+$b = [IO.File]::ReadAllBytes($f)
+# ASCII ≥6
+$ascii = [Text.Encoding]::ASCII.GetString($b)
+[regex]::Matches($ascii,'[\x20-\x7E]{6,}') | ForEach-Object { $_.Value } |
+  Set-Content .\RESULT_DIR\strings_ascii.txt -Encoding UTF8
+# UTF-16LE ≥4（中文提示、宽字符域名多在这里）
+$uni = [Text.Encoding]::Unicode.GetString($b)
+[regex]::Matches($uni,'[\u0020-\u007E\u4e00-\u9fff]{4,}') | ForEach-Object { $_.Value } |
+  Set-Content .\RESULT_DIR\strings_utf16.txt -Encoding UTF8</code></pre>
+<p>抓"像端点"的字符串（先粗筛，后精读）：</p>
+<pre><code>Select-String -Path .\RESULT_DIR\strings_*.txt -Pattern '^/|/api/|token|licen|card|hwid|ver|beat|update|cfg' |
+  Select-Object -First 200 | Format-Table -AutoSize</code></pre>
+<h2 id="h26">2.3 壳与混淆分诊表（决定你后面走哪条路）</h2>
+<table><thead><tr><th>特征</th><th>大概率是</th><th>处置</th></tr></thead><tbody><tr><td>节名 <code>.vmp0/.vmp1</code>，入口点跳到壳段，IAT 只剩十来个</td><td>VMProtect 系</td><td>别硬刚 VM，走<strong>内存 dump + 运行期 hook</strong>（第 3/4 章）</td></tr><tr><td>节名 <code>.themida/.winlice</code>，区段熵 &gt;7.2，反调试极猛</td><td>Themida/WinLicense</td><td>同上；先在干净虚拟机里跑通再上分析机</td></tr><tr><td>全是 <code>UPX0/UPX1</code>，入口 <code>pushad</code></td><td>UPX 系</td><td>直接 <code>upx -d</code>，几分钟的事</td></tr><tr><td>只有 <code>CLR</code> 头、字符串全是 <code>System.*</code></td><td>.NET（可能 Reactor/ConfuserEx）</td><td><code>dnSpy</code>/<code>ILSpy</code> 打开，先看字符串常量与 HTTP 调用点</td></tr><tr><td>区段熵正常、代码可读、只是字符串被加密</td><td>轻量混淆</td><td>找解密函数（通常是 <code>xor</code> + 长度前缀），批量还原字符串</td></tr><tr><td>一个 200KB 的 exe 里有完整 Lua/Python 解释器</td><td>脚本引擎</td><td>找脚本体（往往在资源段或安装目录），脚本里常有明文端点</td></tr></tbody></table>
+<blockquote>【判据】判断"要不要脱壳"的唯一标准：<strong>能不能在内存里读到真实字符串</strong>。能读到 → 不脱壳也能推进；读不到 → 先解决内存可见性（dump / hook），不要先解决静态脱壳。</blockquote>
+<h2 id="h27">2.4 域名与端点表的存放形态（六种，逐种给判别法）</h2>
+<table><thead><tr><th>形态</th><th>判别</th><th>提取</th></tr></thead><tbody><tr><td>明文</td><td><code>strings</code> 里直接出现 <code>http</code>/<code>/api/</code></td><td>直接抓</td></tr><tr><td>单字节 XOR</td><td>字符串区出现大段不可打印但<strong>字节分布集中</strong></td><td>用 0x01–0xFF 逐键爆破，看哪种键能让 <code>http</code> 出现</td></tr><tr><td>RC4/base64 包一层</td><td>有 <code>ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=</code> 长串</td><td>找密钥常量（常是产品名/版本号拼 <code>SIG_KEY</code>），解一遍</td></tr><tr><td>资源段</td><td>用 <code>ResourceHacker</code> 能看到自定义类型</td><td>按资源 ID 导出后按上面几法解</td></tr><tr><td>DNS TXT</td><td>客户端只出现一个"短域名"，却能在断域名时换服</td><td><code>Resolve-DnsName -Type TXT API_BASE</code>（见 3.4）</td></tr><tr><td>远端托管</td><td>字符串里出现对象存储/GitHub raw/短链</td><td>直接 GET，注意可能带 UA/Referer 校验</td></tr></tbody></table>
+<p>XOR 爆破的最小实现（不依赖任何工具，直接跑）：</p>
+<pre><code># 用法: python xorscan.py CFG_BLOB.bin
+import sys
+b = open(sys.argv[1],'rb').read()
+for k in range(1,256):
+    d = bytes(x ^ k for x in b)
+    if b'http' in d or b'/api' in d:
+        print(hex(k), d[:120])</code></pre>
+<blockquote>【反例】曾把一段"看起来是 base64"的串解了 40 分钟，最后发现它是<strong>卡密校验位表</strong>（纯随机字节的 base64 表示），根本不是端点。判据：解出来的东西<strong>必须能自证</strong>（含 <code>http</code>/<code>/</code>/<code>?</code>/=` 或能被 JSON 解析），否则换目标。</blockquote>
+<h2 id="h28">2.5 驱动与内核模块：多数时候你不需要碰它</h2>
+<p>外挂的驱动通常干三件事：读宿主内存、隐藏自身、绕过检测。<strong>它与"服务器还原"的交集只有两处</strong>：</p>
+<ol><li><strong>加载期校验</strong>：驱动加载前可能要求一个"授权通过的凭据"（注册表项/文件/命名管道）。这个凭据由服务端下发 → 你要能生成它（见第 6 章）。</li><li><strong>网络隧道</strong>：极少数套件把心跳走驱动层（<code>NDIS</code> 过滤/自定义协议），此时常规代理看不到，必须用驱动层或物理层抓包。</li></ol>
+<p>判别法：</p>
+<pre><code># 驱动是否存在、签名者是谁、加载方式
+Get-ChildItem C:\Windows\System32\drivers\*.sys | Where-Object { $_.LastWriteTime -gt (Get-Date).AddDays(-90) } |
+  Select-Object Name,LastWriteTime,Length
+Get-AuthenticodeSignature .\CHEAT_CORE.sys | Format-List Status,SignerCertificate
+sc.exe qc &lt;SERVICE_NAME&gt;          # 服务注册信息（启动类型、binPath）</code></pre>
+<blockquote>【判据】<strong>驱动不是你的交付物</strong>。只有当"服务端必须产出一个让驱动接受的东西"时，才需要深入它；否则把它当作黑盒，只观测它的输入输出。</blockquote>
+<h2 id="h29">2.6 静态的边界：三件永远看不到的事</h2>
+<table><thead><tr><th>看不到</th><th>为什么</th><th>只能怎么拿</th></tr></thead><tbody><tr><td>服务端逻辑</td><td>代码不在样本里</td><td>差分实验（第 5/6 章）：改一个输入，看输出怎么变</td></tr><tr><td>动态密钥</td><td>运行期协商或与 <code>HWID</code> 绑定</td><td>运行期 hook 取（第 3/4 章）</td></tr><tr><td>远端灰度</td><td>服务端按 <code>CHANNEL</code>/<code>HWID</code> 分流</td><td>多账号/多版本对拍（第 7 章）</td></tr></tbody></table>
+<p><strong>写进文档的规矩</strong>：静态能得出的结论，必须标注【静态】并写清代次；凡是"我猜服务端会……"的句子，一律改写成<strong>待验假设 + 验证动作</strong>。</p>
+<h2 id="h30">2.7 本章要点</h2>
+<ol><li>代次冻结三件套（哈希/时间/版本），缺一件结论会漂。</li><li>三层静态入口各有盲区，磁盘上没有的东西先去内存看。</li><li>壳分诊的目的是"能不能读到字符串"，不是"脱得多干净"。</li><li>域名表六种存法，逐种有判别法；解出来必须能自证。</li><li>驱动多数时候是黑盒；只关心它要什么凭据。</li></ol>
+<hr>
+<h1 id="h31">第 3 章 网络发现：把 <code>API_BASE</code> 从流量里钉死</h1>
+<h2 id="h32">3.1 拦截层选择：五条路，选错就白跑一周</h2>
+<table><thead><tr><th>层</th><th>手段</th><th>能看到什么</th><th>看不到什么</th><th>适用</th></tr></thead><tbody><tr><td><strong>L4-a 进程内</strong></td><td>hook <code>ws2_32!send/recv</code>、<code>WinHTTP</code>、<code>WinINet</code></td><td>明文（TLS 之前）+ 明文（TLS 之后，若 hook 在 schannel 之上）</td><td>走驱动层的流量</td><td>首选</td></tr><tr><td><strong>L4-b 系统代理</strong></td><td>设 <code>HTTP_PROXY</code>/WinINet 代理</td><td>仅 HTTP(S)，且需客户端尊重系统代理</td><td>自研 TCP/UDP、硬编码直连</td><td>快速摸底</td></tr><tr><td><strong>L4-c 透明网关</strong></td><td>本机网关 + 证书替换（mitm）</td><td>几乎所有 TCP/TLS</td><td>证书 pinning、双向认证</td><td>中期主力</td></tr><tr><td><strong>L4-d 被动抓包</strong></td><td><code>Wireshark</code> / <code>dumpcap</code> / <code>pktmon</code></td><td>全部流量（含 UDP）</td><td>内容（若加密）</td><td>判断"有几条连接"</td></tr><tr><td><strong>L4-e 运行期注入</strong></td><td><code>Frida</code> attach 到客户端进程</td><td>函数入参/返回值、解密后明文</td><td>内核层</td><td>取密钥、改返回值</td></tr></tbody></table>
+<p><strong>判断"该用哪层"的顺序</strong>：先 d（看有几条连接、什么协议）→ 再 a（看明文）→ 不够再 c（绕过自研协议）→ 最后 e（取密钥/改行为）。</p>
+<p>被动抓包（Windows 自带，不用装东西）：</p>
+<pre><code># 需要管理员；先看有哪些接口
+pktmon filter remove
+pktmon filter add -i &lt;IF_INDEX&gt; -t TCP
+pktmon start --etw -m real-time -f .\CAP_FILE.etl
+# Ctrl+C 停止后转文本
+pktmon stop
+pktmon etl2txt .\CAP_FILE.etl -o .\CAP_FILE.txt</code></pre>
+<h2 id="h33">3.2 TLS 与 pinning：先判"校验在哪一层"，再谈绕过</h2>
+<table><thead><tr><th>形态</th><th>现象（换自签证书后）</th><th>校验位置</th><th>处置</th></tr></thead><tbody><tr><td>不校验</td><td>一切正常</td><td>—</td><td>直接 mitm</td></tr><tr><td>只校 CA</td><td>报证书链错误</td><td><code>schannel</code> / 系统根</td><td>把自签 CA 装进"受信任根"</td></tr><tr><td>校 CN/SAN</td><td>报名称不匹配</td><td>上层库自己比对</td><td>证书 <strong>CN 与 SAN 都要</strong>写 <code>API_BASE</code> 的域名</td></tr><tr><td>校指纹（pinning）</td><td>报"网络异常"，且<strong>握手成功</strong>后立刻断</td><td>客户端硬编码指纹</td><td>改内存里的指纹 / hook 校验函数返回 true</td></tr><tr><td>双向认证</td><td>服务端要求客户端证书</td><td>双向 TLS</td><td>从客户端提取证书与私钥再用</td></tr></tbody></table>
+<p>判别用的最小实验：</p>
+<pre><code># 1) 用自签证书起一个 HTTPS mock，看客户端报什么
+# 2) 同时观察服务端日志：握手是否成功、有没有 HTTP 请求到达
+# 判据：握手成功 + 无 HTTP 请求 ⇒ pinning/双向认证；握手失败 ⇒ 校 CA/校名</code></pre>
+<blockquote>【判据】"pinning 存在"的唯一硬证据是：<strong>同一个域名，浏览器能通、客户端不通，且失败发生在 TLS 阶段之后</strong>。只凭"报网络异常"不能判定。</blockquote>
+<h2 id="h34">3.3 端点枚举：从抓包到端点表</h2>
+<p>一张端点表要能直接当成"要实现什么"的工单。表头照抄：</p>
+<table><thead><tr><th>端点</th><th>方法</th><th>入参（名:类型）</th><th>出参（名:类型）</th><th>鉴权</th><th>新鲜度</th><th>幂等</th><th>必需等级</th></tr></thead><tbody><tr><td><code>/auth/login</code></td><td>POST</td><td><code>LICENSE_KEY:str, HWID:str, CLIENT_VER:str, REPLAY_TS:int, NONCE:str, sign:hex</code></td><td><code>code:int, SESSION_TOKEN:str, expire:int, cfg_ver:int, notice:str, ver_new:str</code></td><td>无</td><td>±300s</td><td>是</td><td>硬必需</td></tr><tr><td><code>/cfg/…</code></td><td>GET</td><td><code>ver:int, token:str</code></td><td><code>CFG_BLOB:base64</code></td><td>token</td><td>否</td><td>是</td><td>硬必需</td></tr><tr><td><code>/auth/beat</code></td><td>POST</td><td><code>token, HWID, REPLAY_TS</code></td><td><code>code:int, remain:int</code></td><td>token</td><td>±60s</td><td>是</td><td>硬必需</td></tr></tbody></table>
+<p>三个容易漏的字段：</p>
+<ol><li><strong><code>CLIENT_VER</code></strong> —— 它决定服务端回哪套结构，漏了会导致"换版本就崩"。</li><li><strong><code>CHANNEL</code></strong> —— 灰度/渠道分流键，常在自定义头里（<code>X-Channel</code>）。</li><li><strong><code>sign</code></strong> —— 见第 4 章；它的<strong>字段集</strong>就是端点契约的一部分。</li></ol>
+<p>抓包 → 端点表的自动化（把同一路径的请求聚合）：</p>
+<pre><code># 假设已把抓包导出为 url + body 的 jsonl（自建代理产物）
+Get-Content .\CAP_FILE.requests.jsonl | ForEach-Object { ($_ | ConvertFrom-Json) } |
+  Group-Object { "$($_.method) $($_.path)" } |
+  Select-Object Name,Count,
+    @{n='bodykeys';e={ ($_.Group[0].body | Get-Member -MemberType NoteProperty).Name -join ',' }} |
+  Sort-Object Count -Descending | Format-Table -AutoSize</code></pre>
+<h2 id="h35">3.4 域名轮询与备用列表：怎么证明"还有别的域名"</h2>
+<p>外挂几乎一定有多域名兜底（域名被墙/被封就换）。<strong>证明它存在</strong>，比找到它更重要：</p>
+<table><thead><tr><th>方法</th><th>操作</th><th>判据</th></tr></thead><tbody><tr><td>阻断主域名</td><td><code>hosts</code> 把 <code>API_BASE</code> 指到 <code>127.0.0.1:1</code></td><td>客户端仍能登录 ⇒ 有备用；此时抓包看新连接的目标</td></tr><tr><td>看 DNS 行为</td><td>被动抓包只看 53 端口与 TLS SNI</td><td>出现未见过的主机名 ⇒ 备用列表在跑</td></tr><tr><td>查 DNS TXT</td><td><code>Resolve-DnsName -Type TXT API_BASE</code></td><td>TXT 里是域名/IP ⇒ 动态下发</td></tr><tr><td>看证书 SAN</td><td>抓 ClientHello / 看证书</td><td>SAN 里列了多个域名 ⇒ 同一套件通用</td></tr><tr><td>看资源/字符串</td><td><code>strings</code> 里搜 <code>.com</code>/<code>.net</code>/<code>.xyz</code> 片段</td><td>多个短域名 ⇒ 轮询列表</td></tr></tbody></table>
+<pre><code>Resolve-DnsName -Type TXT -Name API_BASE -ErrorAction SilentlyContinue
+Resolve-DnsName -Type NS,SOA -Name API_BASE</code></pre>
+<blockquote>【反例】以为只有一个域名，做完上线三天后主域名被封，客户端全部"网络异常"，而备用域名在<strong>更新包里</strong>（不在主程序里）。教训：<strong>域名列表的代次跟更新包绑定</strong>，第 7 章的"版本协商"里必须预留"域名列表更新"这条通路。</blockquote>
+<h2 id="h36">3.5 时钟与延迟：三个钟，只有一个能用</h2>
+<table><thead><tr><th>钟</th><th>来源</th><th>可信度</th><th>用途</th></tr></thead><tbody><tr><td>本地系统钟</td><td>用户机器</td><td>低（用户可改，<code>REPLAY_TS</code> 就取它）</td><td>只用来满足"时间戳窗口"</td></tr><tr><td>服务端钟</td><td>响应里的 <code>server_ts</code></td><td>高</td><td>用来校本地漂移、判定"时间加速"攻击</td></tr><tr><td>抓包主机钟</td><td>抓包工具</td><td>中（含捕获延迟）</td><td>只用来算间隔与顺序</td></tr></tbody></table>
+<p><strong>延迟补偿的做法</strong>：不要用"精确时刻"配对请求与响应，用<strong>配对率随 Δt 的曲线</strong>——把 Δt 从 0 扫到 3000ms，取配对率峰值所在的窗口，这个窗口就是你的"经验延迟"。写文档时写"Δt∈[x,y] 时配对率 &gt;90%"，不要写"延迟约 80ms"。</p>
+<p>【判据】凡是拿"时间"当判据的地方（扣时、到期、心跳间隔），必须写明用的是<strong>哪个钟</strong>，否则跨机器复现时结论必然打架。</p>
+<h2 id="h37">3.6 本章要点</h2>
+<ol><li>拦截层先 d 后 a，最后 e；选层的目的是"能看见什么"，不是"哪个高级"。</li><li>pinning 的判据是"握手成功但请求不到"，不是"报网络异常"。</li><li>端点表三个易漏字段：<code>CLIENT_VER</code>、<code>CHANNEL</code>、<code>sign</code>。</li><li>备用域名的<strong>存在性</strong>比内容重要；它常跟更新包同代。</li><li>时间判据必须绑定钟，延迟用窗口不用点。</li></ol>
+<h1 id="h38">第 4 章 加密与签名：从密文回到明文</h1>
+<h2 id="h39">4.1 算法指纹：不看函数名，看常量与结构</h2>
+<p>外挂的加密层通常是"现成算法 + 自研拼接"，不是密码学创新。<strong>识别靠指纹，不靠猜名字</strong>：</p>
+<table><thead><tr><th>指纹</th><th>算法</th><th>判别要点</th></tr></thead><tbody><tr><td>出现 <code>0x9E3779B9</code>（或 <code>0x61C88647</code>）</td><td>TEA / XTEA / XXTEA</td><td>32 轮特征循环 + 该常量</td></tr><tr><td>256 字节 S 盒（<code>0x63,0x7C,0x77,0x7B…</code>）或 T-table</td><td>AES</td><td>分组 16 字节，密文长度必为 16 的倍数</td></tr><tr><td>256 次循环初始化 + <code>swap(S[i],S[j])</code></td><td>RC4</td><td>密文与明文<strong>等长</strong>，无填充</td></tr><tr><td>单字节/周期性重复模式</td><td>XOR</td><td>密文与明文等长；异或后出现可读串</td></tr><tr><td>头 <code>1F 8B</code></td><td>gzip</td><td>压缩而非加密</td></tr><tr><td>头 <code>78 9C</code> / <code>78 01</code> / <code>78 DA</code></td><td>zlib</td><td>同上</td></tr><tr><td>头 <code>04 22 4D 18</code></td><td>lz4</td><td>少见但有的更新包用</td></tr><tr><td>字符集 <code>A–Za–z0–9+/=</code> 且长度 4 的倍数</td><td>base64</td><td>编码层，不是加密</td></tr><tr><td>全 <code>0-9A-F</code></td><td>hex</td><td>同上</td></tr><tr><td><code>MZ</code>/<code>PK</code>/<code>BZh</code> 出现在"密文"里</td><td>根本没加密</td><td>直接当内层产物处理</td></tr></tbody></table>
+<blockquote>【判据】判"是不是分组密码"不需要密钥：<strong>看密文长度是否恒为块大小整数倍，且改一个明文字节后整个块全变</strong>。满足 → 分组（AES/SM4 一类）；不满足且等长 → 流密码（RC4/XOR/自研）。</blockquote>
+<h2 id="h40">4.2 密钥从哪来：四种形态，各有识别法</h2>
+<table><thead><tr><th>形态</th><th>特征</th><th>识别</th><th>对你的影响</th></tr></thead><tbody><tr><td><strong>硬编码</strong></td><td>同一版本每次抓包密文不同但<strong>能用同一密钥解</strong></td><td>用磁盘里的常量试解一次成功</td><td>最好办：直接写进生成器</td></tr><tr><td><strong>派生</strong></td><td>不同卡密/不同账号解出的密钥不同</td><td>用两个账号对拍，密钥不同 → 派生于 <code>LICENSE_KEY</code>/<code>HWID</code>/<code>SIG_KEY</code></td><td>必须复刻 KDF（通常是 <code>md5(盐 + 卡密)[:16]</code> 一类）</td></tr><tr><td><strong>服务端下发</strong></td><td>登录响应里有可疑的 32/43/44 字符字段</td><td>该字段随登录变化，且能解后续 blob</td><td>必须先实现登录，才能实现后续</td></tr><tr><td><strong>会话协商</strong></td><td>首次连接有一段"握手报文"，之后密文变</td><td>前 2–3 个报文长度固定且非业务</td><td>少见；多为"客户端随机数 + 服务端公钥加密"的简化版</td></tr></tbody></table>
+<p>派生形态的 KDF 反推（最小可跑模板）：</p>
+<pre><code>import hashlib, itertools, base64
+KEY_LEN = {16:'aes128', 32:'aes256', 24:'3des'}
+def cands(license_key, hwid, ver, salt_guesses):
+    parts = {'L':license_key, 'H':hwid, 'V':str(ver), 'C':'CHANNEL'}
+    for order in itertools.permutations('LHV', 3):
+        for sep in ['', '|', ':', '-']:
+            base = sep.join(parts[k] for k in order)
+            for salt in salt_guesses:
+                for algo in ('md5','sha1','sha256'):
+                    h = getattr(hashlib, algo)((salt + base).encode()).hexdigest()
+                    for enc in (h, base64.b64encode(bytes.fromhex(h)).decode()):
+                        yield f'{algo}({salt}+{order}{sep!r})', enc[:32]
+# 判据：能把已知密文解开成合法 JSON/已知明文 的那一条</code></pre>
+<blockquote>【反例】花两天枚举 KDF 变体，最后发现密钥就是<strong>服务端下发</strong>的、且它本身用固定密钥加密（<code>SIG_KEY</code>）。教训：<strong>先用"服务端下发"假设试一次</strong>（把登录响应里每个可疑字段当密钥逐个试解），再用"派生"假设。顺序反了会白烧两天。</blockquote>
+<h2 id="h41">4.3 层次顺序：六种排列，用"长度 + 魔数"五分钟判掉</h2>
+<table><thead><tr><th>#</th><th>排列</th><th>判别</th></tr></thead><tbody><tr><td>1</td><td><code>明文 → AES → base64</code></td><td>解 base64 得 16 倍数；AES 解出即为明文</td></tr><tr><td>2</td><td><code>明文 → gzip → AES → base64</code></td><td>AES 解出后头两字节 <code>1F 8B</code></td></tr><tr><td>3</td><td><code>明文 → AES → gzip → base64</code></td><td>解 base64 后头两字节 <code>1F 8B</code>（压缩在最外）</td></tr><tr><td>4</td><td><code>明文 → XOR → base64</code></td><td>base64 解出等长；异或后可读</td></tr><tr><td>5</td><td><code>明文 → RC4 → hex</code></td><td>hex 解出等长；RC4 解出可读</td></tr><tr><td>6</td><td><code>明文 → 自研打包(head+len+payload) → AES</code></td><td>头里带 <code>len</code>/<code>ver</code>/<code>crc</code>，payload 才是 AES 密文</td></tr></tbody></table>
+<p><strong>判掉顺序的固定流程</strong>（照做，别跳）：</p>
+<ol><li>取密文，先看<strong>外层编码</strong>：字符集是 base64/hex 就先解码，得到二进制 <code>X</code>。</li><li>看 <code>X</code> 的前 2–4 字节：<code>1F8B</code>/<code>789C</code> → 压缩在外层；<code>MZ</code>/<code>PK</code> → 没加密；否则当密文。</li><li>如果压缩在外层，先解压再回第 2 步（可能套了两层压缩）。</li><li>剩下真是密文的，按 4.1 的指纹判算法，按 4.2 定密钥，解出来的东西<strong>必须能自证</strong>（JSON/<code>MZ</code>/<code>OFFSETS_TABLE</code> 的固定头）。</li></ol>
+<h2 id="h42">4.4 签名：拼接顺序是唯一难点</h2>
+<p>签名的形式通常是 <code>sign = H(拼接串 + SIG_KEY)</code>，难点全在<strong>拼接串怎么拼</strong>。用<strong>字段参与测试</strong>逐项排除，比猜快得多：</p>
+<table><thead><tr><th>实验</th><th>改动</th><th>观察</th><th>结论</th></tr></thead><tbody><tr><td>E1</td><td>只改 <code>LICENSE_KEY</code> 一个字符</td><td><code>sign</code> 变 → 该字段参与</td><td>记入字段集</td></tr><tr><td>E2</td><td>只改 <code>REPLAY_TS</code></td><td><code>sign</code> 变 → 时间参与</td><td>意味着<strong>签名绑时间</strong>，重放会过期</td></tr><tr><td>E3</td><td>调整 JSON 字段顺序（不改值）</td><td><code>sign</code> 不变 → 服务端按<strong>键名排序</strong>拼接</td><td>拼接前排序</td></tr><tr><td>E4</td><td>加一个空字段 <code>""</code></td><td><code>sign</code> 不变 → 空值不参与</td><td>空值剔除</td></tr><tr><td>E5</td><td>中文参数</td><td>看 <code>sign</code> 是否与 URL 编码后的值一致</td><td>决定编码方式</td></tr></tbody></table>
+<p>自动验证候选拼接（枚举 + 已知 pair，几秒出结果）：</p>
+<pre><code>import hashlib, itertools, json
+def gen(body: dict, sig_key: str):
+    items = [(k, str(v)) for k, v in body.items() if k not in ('sign',)]
+    seps = ['', '&amp;', '|', ',']
+    for sep in seps:
+        for sort in (True, False):
+            seq = sorted(items) if sort else items
+            for kv in ('k=v', 'v', 'k:v'):
+                s = sep.join(f'{k}={v}' if kv=='k=v' else (v if kv=='v' else f'{k}:{v}') for k,v in seq)
+                for suffix in (sig_key, sig_key.lower(), sig_key.upper()):
+                    for algo in ('md5','sha1','sha256'):
+                        for form in ('hex','HEX'):
+                            h = getattr(hashlib, algo)((s + suffix).encode()).hexdigest()
+                            yield (algo, sep, sort, kv, form), (h if form=='hex' else h.upper())
+# 用一条已知 (body, sign) 对拍，命中即停</code></pre>
+<blockquote>【判据】签名算法的验证判据只有一个：<strong>用已知抓包的 (body, sign) 能算出同一个值</strong>。算不出来就说明拼接/编码/密钥任一不对，<strong>不要</strong>先去做"服务端也许不验签"的假设——验不验签要用 E6（改 body 不改 sign）单独测。</blockquote>
+<h2 id="h43">4.5 时间戳与 <code>NONCE</code>：重放实验设计</h2>
+<table><thead><tr><th>实验</th><th>做法</th><th>可能结果</th><th>结论</th></tr></thead><tbody><tr><td>R1</td><td>原样重放一个登录请求（同 <code>REPLAY_TS</code>、同 <code>NONCE</code>）</td><td>被拒（<code>code=时间失效/重复请求</code>）</td><td>服务端有窗口 + nonce 表</td></tr><tr><td>R2</td><td>只改 <code>REPLAY_TS</code> 为当前时间，<code>NONCE</code> 不变</td><td>通过</td><td>nonce 只在窗口内一次性</td></tr><tr><td>R3</td><td>只换新 <code>NONCE</code>，<code>REPLAY_TS</code> 保留旧的</td><td>通过</td><td>窗口较宽（常见 ±300s）</td></tr><tr><td>R4</td><td>把 <code>REPLAY_TS</code> 每次 +60s 二分</td><td>找到确切边界</td><td>窗口大小（写进文档）</td></tr><tr><td>R5</td><td>把 <code>REPLAY_TS</code> 设到未来</td><td>看是否拒绝</td><td>是否防"时间加速"</td></tr></tbody></table>
+<p><strong>你的服务端要不要实现 nonce 表</strong>？判据：<strong>客户端自己是否会生成 nonce</strong>。若客户端每次请求的 nonce 都不同（含随机数），说明它期待服务端校验；若它复用同一个值，说明服务端根本没验。<strong>照客户端的期待实现，不要照你的喜好实现</strong>——多实现一层校验，唯一的后果是把自己的测试卡死。</p>
+<h2 id="h44">4.6 解不出时的正确行为（这一节是纪律，不是技巧）</h2>
+<table><thead><tr><th>做法</th><th>对/错</th><th>理由</th></tr></thead><tbody><tr><td>解不出来就写 0 字节并标注 <code>undecodable</code></td><td>✅</td><td>后面能统计"有多少条不可解"，而不是以为"没流量"</td></tr><tr><td>保留原始密文 + 元数据（长度、端点、时间）</td><td>✅</td><td>密钥后补时可重跑，不必重新抓</td></tr><tr><td>用猜测的填充/密钥硬凑出"看起来像 JSON"的东西</td><td>❌</td><td>会污染下游所有结论（第 9 章的假成功一半来自这里）</td></tr><tr><td>因为解不出就宣布"没有业务流量"</td><td>❌</td><td>判据错：业务流量判据是<strong>端点存在</strong>，不是"我能读懂"</td></tr></tbody></table>
+<pre><code># 落盘格式建议：一条请求一行，密文单独存文件，永不覆盖
+# CAP_FILE.requests.jsonl
+# {"t":"2026-11-26T22:31:02.114+08:00","ep":"/auth/login","len":214,"sha":"ab12…","blob":"blobs/0001.bin","state":"ok|undecodable"}</code></pre>
+<h2 id="h45">4.7 本章要点</h2>
+<ol><li>算法靠指纹（常量/结构/长度）判，不靠函数名。</li><li>密钥四种形态，<strong>先用"服务端下发"试</strong>，再试派生。</li><li>层次顺序用"编码 → 魔数 → 压缩 → 密文"四步判掉。</li><li>签名难点是拼接顺序；用 E1–E5 实验 + 候选枚举，判据是"能重算出同一个 sign"。</li><li>解不出就诚实标注；不要用猜测污染下游。</li></ol>
+<hr>
+<h1 id="h46">第 5 章 端点契约还原：把 API 变成可实现的规格</h1>
+<h2 id="h47">5.1 契约表：把"我知道这个接口"变成"我能实现这个接口"</h2>
+<p>字段定义（缺一项就不算契约）：</p>
+<table><thead><tr><th>列</th><th>定义</th><th>为什么必需</th></tr></thead><tbody><tr><td>端点</td><td>方法 + 路径（含查询串形态）</td><td>实现的最小单位</td></tr><tr><td>入参</td><td>名:类型（含是否必填）</td><td>决定校验逻辑</td></tr><tr><td>出参</td><td>名:类型（含可空性）</td><td>决定客户端能否消费</td></tr><tr><td>鉴权</td><td>无 / token / token+sign / 双向</td><td>决定中间件</td></tr><tr><td>新鲜度</td><td>时间窗、nonce、一次性</td><td>决定反重放实现</td></tr><tr><td>幂等</td><td>重复请求是否等价</td><td>决定重试策略</td></tr><tr><td><strong>必需等级</strong></td><td>硬必需 / 软必需 / 可选</td><td>决定实现优先级</td></tr></tbody></table>
+<p><strong>必需等级怎么定</strong>（唯一办法是减法）：</p>
+<ul><li><strong>硬必需</strong>：缺了它，客户端停在某个界面<strong>不动</strong>。</li><li><strong>软必需</strong>：缺了它，客户端能进，但<strong>某功能不可用</strong>。</li><li><strong>可选</strong>：缺了它，只掉一个提示（公告、统计上报）。</li></ul>
+<h2 id="h48">5.2 字段语义命名三步法：先算、再查、再投票</h2>
+<table><thead><tr><th>步</th><th>做什么</th><th>产出</th></tr></thead><tbody><tr><td><strong>1 算</strong></td><td>统计每个字段：长度分布、取值集合、是否随请求变化、是否随账号变化</td><td>候选类型（时间戳/枚举/哈希/计数字符串/布尔）</td></tr><tr><td><strong>2 查</strong></td><td>在字符串表、错误提示、日志文案里找同名/近义词</td><td>语义候选清单</td></tr><tr><td><strong>3 投票</strong></td><td>多份抓包（多账号、多版本）看该字段的<strong>变化规律</strong>，与候选逐一比对</td><td>定名或标"未命名"</td></tr></tbody></table>
+<pre><code># 步 1 的最小统计：每个字段的取值分布
+Get-Content .\CAP_FILE.responses.jsonl | ForEach-Object { ($_|ConvertFrom-Json).body } |
+  ForEach-Object { $_.PSObject.Properties | ForEach-Object { [pscustomobject]@{k=$_.Name; v=[string]$_.Value} } } |
+  Group-Object k | ForEach-Object {
+    $vals = $_.Group.v | Sort-Object -Unique
+    [pscustomobject]@{ field=$_.Name; n=$_.Count; uniq=$vals.Count; sample=($vals | Select-Object -First 3) -join ' | ' }
+  } | Sort-Object uniq | Format-Table -AutoSize</code></pre>
+<p><strong>判据</strong>：<code>uniq=1</code> 的字段是常量（版本号/渠道/固定 key）；<code>uniq≈n</code> 且长度固定的十六进制是哈希/ID；递增整数是时间或计数；长度为 16/24/32 的 base64 是加密体。</p>
+<blockquote>【反例】把一个 <code>uniq=2</code> 的字段命名为 <code>is_vip</code>，结果是 <code>code</code>（0/1001 两个取值）。教训：<strong>字段名不是语义</strong>，取值分布才是。</blockquote>
+<h2 id="h49">5.3 错误码字典：双层错误，别只看一层</h2>
+<p>外挂的响应几乎都是双层：<strong>HTTP 状态码</strong> + <strong>业务 <code>code</code></strong>。两者不一致是常态：</p>
+<table><thead><tr><th>HTTP</th><th>业务 code</th><th>真实含义</th><th>客户端行为</th></tr></thead><tbody><tr><td>200</td><td>0</td><td>成功</td><td>继续</td></tr><tr><td>200</td><td>1001</td><td>卡密不存在/错误</td><td>停在登录窗</td></tr><tr><td>200</td><td>1002</td><td>已过期</td><td>弹出到期提示</td></tr><tr><td>200</td><td>1003</td><td>已被顶号</td><td>强退</td></tr><tr><td>200</td><td>1004</td><td>设备异常</td><td>提示绑定</td></tr><tr><td>200</td><td>1005</td><td>版本过低</td><td>触发更新</td></tr><tr><td>500</td><td>—</td><td>服务端崩了</td><td>重试/报网络异常</td></tr><tr><td>200</td><td>空 body</td><td>服务端逻辑漏了分支</td><td><strong>静默失败</strong>（最坑）</td></tr></tbody></table>
+<p><strong>枚举方法</strong>：构造非法输入矩阵，把服务端能吐的 code 全逼出来：</p>
+<table><thead><tr><th>输入变形</th><th>期望暴露</th></tr></thead><tbody><tr><td><code>LICENSE_KEY</code> 置空 / 长度+1 / 全 0</td><td>参数校验类错误码</td></tr><tr><td><code>HWID</code> 换机器 / 置空</td><td>设备绑定类</td></tr><tr><td><code>REPLAY_TS</code> 置 0 / 未来 / 很久以前</td><td>时间类</td></tr><tr><td><code>sign</code> 置空 / 改一字节 / 用旧 sign</td><td>签名类</td></tr><tr><td><code>CLIENT_VER</code> 降到很老 / 升到很新</td><td>版本类</td></tr><tr><td>同一卡密并发登录 2 次</td><td>顶号/并发类</td></tr></tbody></table>
+<blockquote>【判据】错误码字典的<strong>覆盖率</strong>要报出来：<code>已命名 code 数 / 观测到的不同 code 数</code>。低于 80% 时，"我已还原授权逻辑"这句话不成立。</blockquote>
+<h2 id="h50">5.4 状态字段 vs 派生字段：这决定你数据库里要存什么</h2>
+<table><thead><tr><th>类型</th><th>定义</th><th>例子</th><th>处置</th></tr></thead><tbody><tr><td><strong>状态字段</strong></td><td>必须由服务端<strong>记住</strong>，否则语义丢失</td><td>剩余时间、是否被顶号、最后心跳时刻、封禁到期</td><td>必须持久化</td></tr><tr><td><strong>派生字段</strong></td><td>可由其它状态<strong>算出来</strong></td><td><code>expire</code>（= 开始 + 时长）、<code>remain</code>（= expire − now）、<code>cfg_ver</code>（= 当前发布版本）</td><td>现算，不要存两份</td></tr></tbody></table>
+<p>【反例】把 <code>remain</code> 存进数据库，又用 <code>expire</code> 现算，两处不一致时客户端按哪个走没人知道，最后表现为"显示 3 天，实际 1 天就到期"。</p>
+<h2 id="h51">5.5 版本分歧：同一端点两套字段集</h2>
+<table><thead><tr><th>形态</th><th>探测方法</th><th>处置</th></tr></thead><tbody><tr><td>字段新增</td><td>两个 <code>CLIENT_VER</code> 的响应做 diff</td><td>服务端按版本返回不同字段集（或全部返回，老版本忽略）</td></tr><tr><td>字段改名</td><td>diff 出"一增一减"且值分布相同</td><td>视为同一字段，做映射表</td></tr><tr><td>结构变化（JSON→加密）</td><td>老版本明文、新版本 base64</td><td>按 <code>CLIENT_VER</code> 分支</td></tr><tr><td>端点路径变化（<code>/api/v1</code> → <code>/api/v2</code>）</td><td>端点表里出现两套</td><td>两套都实现，或做 302</td></tr></tbody></table>
+<pre><code># 两版响应的字段 diff（先用同一账号、同一动作各抓一次）
+$a = Get-Content .\RESULT_DIR\resp_v1.json | ConvertFrom-Json
+$b = Get-Content .\RESULT_DIR\resp_v2.json | ConvertFrom-Json
+Compare-Object ($a.PSObject.Properties.Name) ($b.PSObject.Properties.Name)</code></pre>
+<h2 id="h52">5.6 报数字的正确形状：分母、Δ、未命名占比</h2>
+<table><thead><tr><th>说法</th><th>能不能用</th><th>正确写法</th></tr></thead><tbody><tr><td>"协议还原了 80%"</td><td>❌</td><td>没有分母，无法复核</td></tr><tr><td>"端点表 24 个，已实现 19 个（79%）"</td><td>✅</td><td>分母明确</td></tr><tr><td>"字段命名率 91%"</td><td>⚠️</td><td>要补：分母是"出现过的不同字段数"，不是"出现次数"</td></tr><tr><td>"配对率 96%（Δt∈[80,240]ms），负对照 12%"</td><td>✅</td><td>有窗口、有 Δ</td></tr><tr><td>"未命名字段 7 个，均为 32 位十六进制，已列清单"</td><td>✅</td><td>未命名也要量化</td></tr></tbody></table>
+<h2 id="h53">5.7 本章要点</h2>
+<ol><li>契约表七列，缺一列就不算契约；必需等级只能靠减法定。</li><li>字段命名顺序是"算 → 查 → 投票"，<strong>不要</strong>从名字猜。</li><li>错误码是双层的；空 body 是最坑的一层。</li><li>状态字段必须存，派生字段必须算，不要双存。</li><li>报数字必须带分母与 Δ；未命名也要量化。</li></ol>
+<h1 id="h54">第 6 章 授权账本：卡密、时间与设备绑定</h1>
+<h2 id="h55">6.1 卡密模型：先分类，再谈字段</h2>
+<p>外挂的卡密不是一种东西，<strong>混在一起建模必然对不上账</strong>：</p>
+<table><thead><tr><th>类型</th><th>计时口径</th><th>典型字段</th><th>扣时陷阱</th></tr></thead><tbody><tr><td>计时卡</td><td>按秒/分钟</td><td><code>duration_sec</code></td><td>用户断线不扣 → 账目虚高</td></tr><tr><td>包月/包季/包年</td><td>按自然日或 30 天</td><td><code>expire_ts</code></td><td>到期时刻取"自然日 00:00"还是"购买时刻 +30d"，客户端可能只认一种</td></tr><tr><td>永久</td><td>无到期</td><td><code>expire_ts = 0/9999…</code></td><td>客户端可能把 0 当"未激活"</td></tr><tr><td>试用</td><td>限时或限次</td><td><code>trial_sec</code> / <code>trial_count</code></td><td>限次卡按"登录次数"还是"启动次数"</td></tr><tr><td>兑换码</td><td>一次性</td><td><code>redeemed_by</code>, <code>redeemed_at</code></td><td>重复兑换的幂等</td></tr><tr><td>代理/批发卡</td><td>批量生成、带批次</td><td><code>batch_id</code>, <code>reseller_id</code></td><td>批次对账与回收</td></tr></tbody></table>
+<p><strong>最小字段集</strong>（缺一个就会在某个场景下算错）：</p>
+<pre><code>LICENSE_KEY      主键（含校验位，见 10.2）
+type             timer | monthly | forever | trial | redeem
+duration_sec     计时卡的秒数（其它类型可为空）
+start_ts         首次激活时刻（不是购买时刻）
+expire_ts        到期时刻（派生，但为查询方便可冗余存一份"冻结快照"）
+remain_sec       剩余秒（仅计时卡，且必须与 last_beat 一起更新）
+hwid             绑定设备指纹（可空＝未绑定）
+hwid_changes     已更换次数（配额见 6.4）
+frozen           0/1 冻结（不消耗时间，也不允许登录）
+banned           0/1 封禁（直接拒，且不提示具体原因）
+last_beat        最后心跳时刻（离线判定的唯一依据）
+session_id       当前会话（顶号用）</code></pre>
+<blockquote>【判据】字段是否够用的检验方法：<strong>拿一张卡走完全生命周期</strong>（激活→登录→换机→冻结→到期→退款），每一步都能只靠这张表算出正确响应。算不出的那一步，就是缺字段。</blockquote>
+<h2 id="h56">6.2 扣时发生在哪：五个候选点，用三个实验定死</h2>
+<table><thead><tr><th>候选点</th><th>判别实验</th><th>结果解读</th></tr></thead><tbody><tr><td>登录时扣</td><td>登录后<strong>立刻断网</strong> 10 分钟，再登录看 <code>remain</code></td><td>少了 10 分钟 → 登录时不扣，或扣了又补</td></tr><tr><td>心跳时扣</td><td>登录后正常心跳 10 分钟，不发任何业务请求</td><td><code>remain</code> 少 10 分钟 → 扣时在心跳</td></tr><tr><td>退出时扣</td><td>登录→正常退出→再登录</td><td>若"退出"才扣，则崩溃/断电会<strong>白嫖</strong></td></tr><tr><td>拉配置时扣</td><td>只登录不拉配置</td><td>时间不动 → 与配置无关</td></tr><tr><td>指令/动作时扣</td><td>只发心跳不触发功能</td><td>时间不动 → 与业务无关</td></tr></tbody></table>
+<p><strong>典型实测形态</strong>（多数套件）：<code>扣时 = 每次心跳按"距上次心跳的秒数"累加</code>。这条形态有三个可验证推论：</p>
+<ol><li>心跳间隔越长，误差越大（间隔 60s 时误差上限 60s/次）。</li><li>客户端崩了不回心跳 → <strong>不扣时</strong>（对用户有利，对你是漏洞）。</li><li>服务端重启丢了 <code>last_beat</code> → 可能<strong>多扣</strong>（用服务端当前时间 − 旧 <code>last_beat</code>）。</li></ol>
+<p>【判据】写进文档时必须写清："扣时发生在 X，粒度 Y 秒，断线保底 Z"。三者缺一个，后面所有对账都做不了。</p>
+<h3 id="h57">断线保底的正确实现</h3>
+<pre><code>-- 每次心跳：只累加"有上限"的增量，避免服务端停机导致的巨额扣时
+UPDATE license
+   SET remain_sec = CASE
+         WHEN remain_sec IS NULL THEN remain_sec
+         WHEN :now - last_beat &gt; :max_gap THEN remain_sec - :max_gap   -- 上限（如 180s）
+         ELSE remain_sec - (:now - last_beat)
+       END,
+       last_beat = :now,
+       session_id = :sid
+ WHERE license_key = :key AND frozen = 0 AND banned = 0;</code></pre>
+<h2 id="h58">6.3 顶号、并发与心跳租约</h2>
+<table><thead><tr><th>策略</th><th>现象</th><th>实现要点</th></tr></thead><tbody><tr><td>单会话（后踢前）</td><td>第二端登录成功，第一端 <strong>≤1 个心跳周期</strong>后被踢</td><td>用 <code>session_id</code> 比对，不一致就回 <code>MSG_FORCE_LOGOUT</code></td></tr><tr><td>多会话（限 N）</td><td>第 N+1 端被拒</td><td>会话表 + 计数</td></tr><tr><td>无限制</td><td>同卡多人共用</td><td>多半是上游本身就烂；你实现时要决定是否收紧</td></tr></tbody></table>
+<p><strong>踢人的延迟 = 心跳间隔</strong>，这一点必须写进验收：用户感知的"顶号速度"不是由你的逻辑决定，而是由客户端的轮询周期决定。若客户端只在心跳里检查 <code>session_id</code>，你的服务端<strong>无法</strong>做到"秒踢"，除非它还有长连接推送。</p>
+<blockquote>【反例】为了让"顶号即时生效"，把心跳间隔从 60s 改成 5s，结果一晚上把服务端打挂（在线 2000 人 × 12 次/分 = 400 QPS 的纯心跳）。教训：<strong>踢人延迟是产品决策，不是技术优化点</strong>。</blockquote>
+<h2 id="h59">6.4 设备绑定：<code>HWID</code> 的组成与更换配额</h2>
+<table><thead><tr><th>组成项</th><th>稳定性</th><th>采集方式（客户端侧）</th><th>还原时要不要复刻</th></tr></thead><tbody><tr><td><code>MachineGuid</code></td><td>高（重装系统才变）</td><td>注册表 <code>Cryptography\MachineGuid</code></td><td>要：多数套件用它做主键</td></tr><tr><td>硬盘序列号 / 卷序列号</td><td>中（换盘就变）</td><td>WMI / <code>IOCTL_STORAGE_QUERY_PROPERTY</code></td><td>看情况</td></tr><tr><td>主板序列号</td><td>高</td><td>WMI <code>Win32_BaseBoard</code></td><td>少数用</td></tr><tr><td>网卡 MAC</td><td>低（虚拟网卡多）</td><td><code>GetAdaptersInfo</code></td><td><strong>慎用</strong>：多网卡会抖动</td></tr><tr><td>CPUID / 处理器特征</td><td>高</td><td><code>cpuid</code></td><td>少数用</td></tr><tr><td>用户名 / 计算机名</td><td>极低</td><td>环境变量</td><td>只会做辅助校验</td></tr></tbody></table>
+<p><strong>还原要点</strong>：你的服务端<strong>不需要自己算 <code>HWID</code></strong>——它是客户端算好传来的。你要做的是：</p>
+<ol><li><strong>判断它是否稳定</strong>：同一台机器连登 3 次，<code>HWID</code> 是否完全一致（有套件每次取 MAC 顺序不同导致抖动 → 你必须做"模糊匹配"或多值容忍）。</li><li><strong>实现更换配额</strong>：<code>hwid_changes &lt; max</code> 时允许改绑，超过就拒。</li><li><strong>处理冲突</strong>：同一 <code>HWID</code> 绑多张卡（正常，网吧/多开），同一张卡绑多个 <code>HWID</code>（异常）。</li></ol>
+<pre><code>-- 改绑：只允许在配额内，且记录审计
+UPDATE license SET hwid = :new, hwid_changes = hwid_changes + 1
+ WHERE license_key = :key AND hwid_changes &lt; :max_changes;
+-- 影响行数 0 ⇒ 拒（配额用完），必须给客户端明确的 code，不要给"未知错误"</code></pre>
+<h2 id="h60">6.5 状态机：把卡的一生画成图</h2>
+<pre><code>[未激活] --首次登录/激活--&gt; [使用中] --expire--&gt; [已到期]
+     |                          |  |
+     |                          |  +--frozen=1--&gt; [冻结] --解冻--&gt; [使用中]
+     |                          +--banned=1--&gt; [封禁]（终态，除非人工解封）
+     +--兑换码已用--&gt; [作废]
+[已到期] --续费/加时--&gt; [使用中]
+[使用中] --退款--&gt; [已退款]（终态，remain 归零，审计留痕）</code></pre>
+<p><strong>每个迁移必须回答三件事</strong>：谁能触发、触发时改哪些字段、客户端怎么知道（哪个 code / 哪个消息）。三件事没写清的迁移，实现出来一定有状态漏网。</p>
+<h2 id="h61">6.6 对账：让账本自己说话</h2>
+<p>对账公式（缺一项就对不平）：</p>
+<pre><code>发卡总量 = 未激活 + 使用中 + 已到期 + 冻结 + 封禁 + 退款 + 作废 + 损耗
+其中「损耗」= 已发未售（代理囤货） + 测试卡 + 补发卡</code></pre>
+<pre><code>-- 按批次对账
+SELECT batch_id,
+       COUNT(*)                                            AS issued,
+       SUM(CASE WHEN start_ts IS NULL THEN 1 ELSE 0 END)    AS never_activated,
+       SUM(CASE WHEN banned=1 THEN 1 ELSE 0 END)            AS banned,
+       SUM(CASE WHEN refunded=1 THEN 1 ELSE 0 END)          AS refunded,
+       SUM(CASE WHEN start_ts IS NOT NULL AND expire_ts &lt; :now AND refunded=0 AND banned=0
+                THEN 1 ELSE 0 END)                          AS expired,
+       SUM(CASE WHEN start_ts IS NOT NULL AND expire_ts &gt;= :now AND frozen=0 AND banned=0
+                THEN 1 ELSE 0 END)                          AS active
+  FROM license GROUP BY batch_id;</code></pre>
+<blockquote>【判据】对账的唯一通过标准：<strong>上面所有分项之和 = 发卡总量，误差 0</strong>。差 1 张也要查——通常是一张卡在"激活中"被打断（写了 <code>start_ts</code>，没写 <code>expire_ts</code>），这类半成品卡会在两周后变成用户投诉。</blockquote>
+<h2 id="h62">6.7 本章要点</h2>
+<ol><li>卡密分六类，混着建模必然对不上账。</li><li>扣时点用三个实验定死，且必须写"粒度 + 断线保底"。</li><li>踢人延迟由客户端心跳周期决定，不要用缩短间隔去"优化"。</li><li><code>HWID</code> 由客户端算，服务端只负责稳定性容忍、配额与冲突。</li><li>状态机每个迁移答三问；对账必须分项求和为零。</li></ol>
+<hr>
+<h1 id="h63">第 7 章 配置与更新下发：<code>CFG_BLOB</code> 与 <code>OFFSETS_TABLE</code></h1>
+<h2 id="h64">7.1 <code>CFG_BLOB</code> 的解剖：四层，每层都有判据</h2>
+<pre><code>[外层] base64 文本（或 hex）
+  └─ [第2层] gzip/zlib 压缩体（1F 8B / 78 9C）
+       └─ [第3层] AES-CBC 密文（16 字节对齐，前 16 字节常为 IV）
+            └─ [第4层] 内层结构：JSON / TLV / protobuf
+                 ├─ ver          配置代次
+                 ├─ game_ver     适配的宿主版本（关键！）
+                 ├─ offsets[]    OFFSETS_TABLE
+                 ├─ features{}   功能开关与参数
+                 ├─ notice       公告文本
+                 └─ sig          内层签名（有的套件有）</code></pre>
+<p><strong>逐层剥离的固定流程</strong>：解 base64 → 看头 2 字节（压缩则解压）→ 看长度是否 16 的倍数（是则 AES）→ 解密后看是否可 JSON 解析 → 不可解析则按 TLV 猜（先看前 4 字节是不是长度）。</p>
+<table><thead><tr><th>现象</th><th>说明</th><th>处置</th></tr></thead><tbody><tr><td>解到第 3 层就"看起来像随机"</td><td>IV 不是前 16 字节，或 CBC 改成 CTR</td><td>换模式试（CBC/CTR/CFB 各一遍，判据是内层可解析）</td></tr><tr><td>内层是 TLV</td><td>前 4 字节 <code>len</code>、后跟 <code>tag</code></td><td>按 <code>(len,tag,payload)</code> 循环解</td></tr><tr><td>内层能解析但字段对不上</td><td>有<strong>字段级加密</strong>（个别敏感字段单独 AES）</td><td>单字段试解，通常密钥同源</td></tr><tr><td>每次取到的 blob 不同但 <code>ver</code> 相同</td><td>有随机盐/时间戳参与加密</td><td>解密时要取同一份盐，别用旧盐解新包</td></tr></tbody></table>
+<blockquote>【判据】<code>CFG_BLOB</code> 是否"用对了"只有一个判据：<strong>客户端应用后，某个功能的下游产物发生变化</strong>（画面/状态/日志）。长度对、哈希对、能解压——都不算。</blockquote>
+<h2 id="h65">7.2 <code>OFFSETS_TABLE</code>：偏移表与客户端版本的同代约束</h2>
+<p>偏移表是外挂的"弹药"，它必须与<strong>宿主版本</strong>严格同代。典型结构：</p>
+<pre><code>{"ver": 114, "game_ver": "1.2.3.4",
+ "offsets": [
+   {"name":"LOCAL_PLAYER","module":"game.exe","pattern":"48 8B 05 ?? ?? ?? ?? 48 85 C0","rva":"0x1A2B3C4","type":"ptr"},
+   {"name":"VIEW_MATRIX","module":"game.exe","pattern":"F3 0F 10 05 ?? ?? ?? ??","rva":"0x2C4D5E6","type":"mat4"}
+ ]}</code></pre>
+<table><thead><tr><th>约束</th><th>内容</th><th>违反后的现象</th></tr></thead><tbody><tr><td><strong>同代</strong></td><td><code>game_ver</code> 必须等于宿主真实版本</td><td>功能全灰 / 读到垃圾值 → 崩溃</td></tr><tr><td><strong>特征码自校验</strong></td><td>客户端可能用 <code>pattern</code> 去内存里重新定位，定位失败就放弃该条</td><td>部分功能失效（不是全失效，很容易被误判为"某个功能坏了"）</td></tr><tr><td><strong>长度/类型一致</strong></td><td><code>type</code> 决定读几个字节、怎么解释</td><td>数值离谱（血量为 0、坐标 NaN）</td></tr><tr><td><strong>名字不可乱改</strong></td><td>客户端按 <code>name</code> 索引</td><td>改了名字 → 该条被忽略</td></tr></tbody></table>
+<p><strong>生成偏移表的三条纪律</strong>：</p>
+<ol><li><strong>不要手搓 RVA</strong>：用特征码定位 + 基址重算，RVA 只是缓存，<code>pattern</code> 才是真身。</li><li><strong>每条都要有"这条没生效"的独立可观测信号</strong>（见 9.1），否则你无法知道 100 条里坏了几条。</li><li><strong>保留上一代</strong>：<code>game_ver</code> 一变，先发一份 <code>ver+1</code> 但 <code>features</code> 全关的"安全包"，确认客户端能接受，再逐条开。</li></ol>
+<h2 id="h66">7.3 版本协商与强制更新：三个字段谁说话</h2>
+<p>外挂的更新判定常见三个字段，<strong>它们互相打架是常态</strong>：</p>
+<table><thead><tr><th>字段</th><th>语义（猜测）</th><th>判别方法</th></tr></thead><tbody><tr><td><code>ver_new</code></td><td>最新版本号</td><td>改大 → 若弹更新提示，说明它被读</td></tr><tr><td><code>force</code></td><td>是否强制</td><td>置 1 → 若<strong>不点更新就进不去</strong>，说明强制生效；若只是提示，说明它被忽略</td></tr><tr><td><code>min_ver</code></td><td>最低可运行版本</td><td>把客户端 <code>CLIENT_VER</code> 改成低于它 → 若被拒，说明服务端用它在判</td></tr></tbody></table>
+<pre><code># 三字段正交实验（每次只改一个，其余保持上游原值）
+# A: ver_new += 1              → 观察：提示？可跳过？
+# B: force = 1                 → 观察：能否绕过？绕过后功能是否受限？
+# C: CLIENT_VER = 低于 min_ver → 观察：拒绝文案与 code</code></pre>
+<blockquote>【反例】只测了 <code>force=1</code> 发现"能跳过"，就断言"更新不是硬门"，结果线上换版本后所有用户卡在"请更新"。原因：真正的门是 <code>min_ver</code>，<code>force</code> 只是 UI 提示位。教训：<strong>三字段要正交测，别用单个实验下全局结论</strong>。</blockquote>
+<h2 id="h67">7.4 灰度与回滚：键的设计决定你能不能救火</h2>
+<table><thead><tr><th>灰度键</th><th>优点</th><th>缺点</th></tr></thead><tbody><tr><td><code>CHANNEL</code></td><td>实现最简单，改配置即生效</td><td>粒度太粗，出事影响整渠道</td></tr><tr><td><code>HWID</code> 哈希取模</td><td>可分 5%/10%/50%</td><td>用户不可控，测试者可能抽不到</td></tr><tr><td>白名单（卡密/<code>HWID</code>）</td><td>可精确指定测试用户</td><td>需要维护名单</td></tr><tr><td>卡密批次 <code>batch_id</code></td><td>适合"只对新批次生效"</td><td>老用户永远在旧配置</td></tr></tbody></table>
+<p><strong>回滚的正确形态</strong>：不是"把配置改回去"，而是<strong>把 <code>cfg_ver</code> 指针指回上一版</strong>（配置一旦下发就被缓存，改内容没用，改指针才有效）。</p>
+<pre><code>cfg_release(cfg_ver, game_ver, blob_sha256, sig, created_at, active)
+-- 回滚 = UPDATE cfg_release SET active=0 WHERE cfg_ver=:bad; UPDATE ... SET active=1 WHERE cfg_ver=:good;</code></pre>
+<blockquote>【判据】回滚演练的唯一判据：<strong>拿一台已知会崩的客户端，回滚后它能正常进游戏</strong>。没有这个演练，你的"回滚方案"只是文档。</blockquote>
+<h2 id="h68">7.5 分发：CDN、对象存储与缓存头</h2>
+<table><thead><tr><th>方式</th><th>配置</th><th>注意</th></tr></thead><tbody><tr><td>对象存储直链</td><td><code>CFG_BLOB</code> 放 OSS/S3，签名 URL</td><td>URL 有效期要 &gt; 客户端重试窗口</td></tr><tr><td>CDN</td><td>前置 CDN，回源对象存储</td><td><strong>缓存键</strong>必须含 <code>cfg_ver</code>，否则回滚时命中旧缓存</td></tr><tr><td>自建</td><td>自己的 nginx</td><td>需要 <code>Range</code> 支持（更新包断点续传）</td></tr></tbody></table>
+<p><strong>必须设置的响应头</strong>：</p>
+<pre><code>Cache-Control: public, max-age=300, must-revalidate   # 配置类：短缓存
+ETag / If-None-Match                                  # 让客户端能 304
+Content-Length                                        # 缺了会导致客户端截断（静默失败）</code></pre>
+<blockquote>【反例】配置类资源设了 <code>max-age=86400</code>，回滚后 24 小时内客户端仍拿旧包，表现为"回滚了但没人恢复"。教训：<strong>配置类缓存 ≤5 分钟，且缓存键必须含版本</strong>。</blockquote>
+<h2 id="h69">7.6 校验与降级：签名失败时客户端会干什么</h2>
+<table><thead><tr><th>客户端行为</th><th>判别</th><th>你的实现要求</th></tr></thead><tbody><tr><td>静默丢弃，保留旧配置</td><td>功能仍是旧行为</td><td>你必须保证"新旧都可用"，否则一次坏包 = 全体停摆</td></tr><tr><td>报错退出</td><td>弹窗 + 退出</td><td>你的验证必须先于发布做（离线自测）</td></tr><tr><td>降级到内置默认</td><td>功能部分可用</td><td>你要知道"默认值是什么"，别把它当成功</td></tr></tbody></table>
+<p><strong>永不返回半份配置</strong>的工程要求：生成 → 校验（自解一遍）→ 签名 → 存档 → 再发布。四步里任何一步失败，都不许把文件推到线上。</p>
+<h2 id="h70">7.7 本章要点</h2>
+<ol><li><code>CFG_BLOB</code> 四层，逐层剥离有固定流程；能解析不算成功，功能生效才算。</li><li><code>OFFSETS_TABLE</code> 与 <code>game_ver</code> 同代，<code>pattern</code> 才是真身，且每条要有独立信号。</li><li>更新的三个字段要正交测，<code>min_ver</code> 常是真门。</li><li>回滚是"改指针"，不是"改内容"；缓存键必须含版本。</li><li>生成→自校验→签名→存档→发布，缺一步就可能全体停摆。</li></ol>
+<h1 id="h71">第 8 章 心跳、在线态与远程指令</h1>
+<h2 id="h72">8.1 心跳的三个作用：一个请求，三份语义</h2>
+<table><thead><tr><th>作用</th><th>表现</th><th>你的实现要点</th></tr></thead><tbody><tr><td><strong>保活</strong></td><td>停发心跳 → 服务端判离线 → 顶号/配额释放</td><td>TTL 必须大 &gt; 心跳间隔 × 2，否则误判离线</td></tr><tr><td><strong>扣时</strong></td><td><code>remain</code> 递减</td><td>增量要设上限（6.2 的 SQL）</td></tr><tr><td><strong>配置版本核对</strong></td><td>响应里带 <code>cfg_ver</code> / <code>ver_new</code>，客户端据此决定是否重拉</td><td>你的 <code>cfg_ver</code> 一改，客户端要在 ≤1 个周期内跟着变</td></tr></tbody></table>
+<p><strong>间隔来源</strong>：不要假设 60s。抓包量一下实测间隔，并写出分布（有的套件首次 10s、稳定后 300s）。判据：<strong>连续 10 次心跳的间隔中位数</strong>，而不是某一次的间隔。</p>
+<pre><code># 从落盘记录算心跳间隔分布
+$t = Get-Content .\CAP_FILE.requests.jsonl | ForEach-Object { $_ | ConvertFrom-Json } |
+     Where-Object { $_.ep -eq '/auth/beat' } | ForEach-Object { [datetime]$_.t }
+$d = 1..($t.Count-1) | ForEach-Object { ($t[$_] - $t[$_-1]).TotalSeconds }
+$d | Measure-Object -Average -Minimum -Maximum
+($d | Sort-Object)[[int]($d.Count/2)]      # 中位数</code></pre>
+<h2 id="h73">8.2 超时与离线判定：两套判定会打架</h2>
+<table><thead><tr><th>判定方</th><th>依据</th><th>结果</th></tr></thead><tbody><tr><td>服务端</td><td><code>now - last_beat &gt; TTL</code></td><td>清理会话、释放并发额度、可被新登录顶掉</td></tr><tr><td>客户端</td><td>自己收到的最后响应时间</td><td>弹"网络异常"、重连、或继续用缓存</td></tr></tbody></table>
+<p>两者不一致时的典型症状：<strong>服务端认为你离线了，客户端还在用旧 token 发心跳</strong> → 心跳返回"未登录" → 客户端<strong>不会</strong>自动重新登录 → 用户看到"功能还在但什么都不生效"。</p>
+<p><strong>处置办法</strong>：给"token 失效但客户端仍在跑"设计一个<strong>专用的错误码</strong>，并通过心跳响应把它带出去；不要用"网络异常"糊过去（客户端会一直重试，永远不重新登录）。</p>
+<pre><code>beat → 200 {"code":1009,"reason":"session_gone"}   # 客户端据此重新走 login</code></pre>
+<blockquote>【判据】离线判定的正确性判据：<strong>拔网线 5 分钟再插上</strong>，看客户端是否自动恢复。若它原地不动，说明你的 <code>session_gone</code> 分支没实现，或 code 用错了。</blockquote>
+<h2 id="h74">8.3 强制下线与踢人：幂等是唯一难点</h2>
+<table><thead><tr><th>场景</th><th>你的动作</th><th>幂等要求</th></tr></thead><tbody><tr><td>顶号</td><td>旧会话下次心跳返回 <code>MSG_FORCE_LOGOUT</code></td><td>连续 3 次心跳都返回同一结论，不能第 2 次变成"成功"</td></tr><tr><td>封禁</td><td>立即返回封禁码 + 拒绝所有端点</td><td>封禁后已发的配置仍可下载？由你决定，但要一致</td></tr><tr><td>冻结</td><td>允许登录但功能不可用 / 直接拒</td><td>与 6.5 状态机一致</td></tr><tr><td>到期</td><td>返回到期码</td><td>到期后仍允许心跳（用于展示"剩余 0"），但不允许拉配置</td></tr></tbody></table>
+<p><strong>补偿规则</strong>（用户最容易投诉的地方）：</p>
+<ul><li>因<strong>服务端故障</strong>导致的掉线，不扣时（用 6.2 的 <code>max_gap</code> 天然实现）。</li><li>因<strong>顶号</strong>导致的被动下线，不额外扣时。</li><li>因<strong>封禁</strong>不退时间（写明规则，别在代码里随机）。</li></ul>
+<h2 id="h75">8.4 指令队列：拉取式与推送式</h2>
+<table><thead><tr><th>形态</th><th>实现</th><th>延迟</th><th>适用</th></tr></thead><tbody><tr><td><strong>拉取式</strong></td><td>客户端每次心跳问"有没有指令"</td><td>≤1 个心跳周期</td><td>绝大多数套件</td></tr><tr><td><strong>推送式</strong></td><td>客户端保持长连接（WS/自定义 TCP）</td><td>秒级</td><td>少数，且实现更重</td></tr></tbody></table>
+<p>拉取式的表结构（最小可用）：</p>
+<pre><code>CREATE TABLE cmd (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  license_key  TEXT NOT NULL,
+  kind         TEXT NOT NULL,      -- FORCE_LOGOUT / UPDATE_AVAIL / CLEAR_CFG / NOTICE
+  payload      TEXT,
+  created_at   INTEGER NOT NULL,
+  delivered_at INTEGER,            -- 第一次被取走
+  acked_at     INTEGER,            -- 客户端确认
+  expire_at    INTEGER             -- 过期作废，避免"三天后突然弹旧公告"
+);
+CREATE INDEX idx_cmd_pending ON cmd(license_key) WHERE acked_at IS NULL;</code></pre>
+<p><strong>三条纪律</strong>：</p>
+<ol><li><strong>指令必须有 id</strong>，客户端要能确认（<code>ack</code>），否则你会重复投递到用户崩溃。</li><li><strong>投递即标记</strong>，但<strong>确认才删除</strong>；未确认的按 <code>expire_at</code> 自然过期，不要无限重投。</li><li><strong><code>FORCE_LOGOUT</code> 必须与 8.3 的顶号逻辑共用同一套判定</strong>，否则会出现"心跳说踢、指令说别踢"。</li></ol>
+<blockquote>【反例】指令表只按 <code>license_key</code> 删，不按 <code>id</code> 删：用户开两个客户端，一个 ack 了就把另一个的指令一起清了，表现为"有时候能收到踢人，有时候收不到"。</blockquote>
+<h2 id="h76">8.5 时钟漂移与"时间加速"：自建侧必须处理的三件事</h2>
+<table><thead><tr><th>攻击面</th><th>现象</th><th>你的处置</th></tr></thead><tbody><tr><td>改系统时间</td><td>客户端本地时间跳到明天，<code>expire</code> 立即到期或永不到期</td><td>以<strong>服务端 <code>server_ts</code></strong> 为准下发，客户端本地只做展示</td></tr><tr><td>时间加速（变速齿轮）</td><td>客户端内部计时被压缩，心跳变密</td><td>服务端按<strong>到达时刻</strong>计账，不信客户端自报的间隔</td></tr><tr><td>时区/夏令时</td><td>跨时区用户的到期时刻错 1 小时</td><td>全链路用 UTC 秒，展示层再转本地时区</td></tr></tbody></table>
+<pre><code>-- 计账只用服务端时间，且用"单调"来源（避免 NTP 回拨导致的负增量）
+UPDATE license SET remain_sec = remain_sec - MAX(0, MIN(:now - last_beat, :max_gap))
+ WHERE license_key = :key;</code></pre>
+<h2 id="h77">8.6 本章要点</h2>
+<ol><li>心跳一个请求三份语义，TTL 必须 &gt; 2× 间隔。</li><li>服务端与客户端两套离线判定会打架，用专用 code 收敛。</li><li>踢人必须幂等，补偿规则要写死。</li><li>指令要 id + ack + 过期，投递与删除分离。</li><li>计账只信服务端时钟，且增量取 <code>MAX(0, …)</code>。</li></ol>
+<hr>
+<h1 id="h78">第 9 章 客户端副产物：服务端必须产出「真能用」的数据</h1>
+<h2 id="h79">9.1 偏移表/特征码：正确性只能用下游产物判</h2>
+<table><thead><tr><th>下游产物</th><th>怎么观测</th><th>判据强度</th></tr></thead><tbody><tr><td>画面变化</td><td>截图对比（同一场景、同一视角）</td><td>强</td></tr><tr><td>状态数值</td><td>宿主内存里的目标值（血量/坐标）</td><td>强</td></tr><tr><td>客户端日志</td><td><code>CHEAT_CORE</code> 自己打的"应用配置成功/失败"</td><td>中（可能骗人）</td></tr><tr><td>界面状态</td><td>功能开关从灰变亮</td><td>弱（最常见假成功）</td></tr><tr><td>HTTP 200</td><td>服务端返回成功</td><td><strong>不算判据</strong></td></tr></tbody></table>
+<p><strong>最小验证切片</strong>（一次只验一条）：</p>
+<pre><code>① 只下发 1 条 offset（比如 LOCAL_PLAYER），features 全关
+② 判定：客户端日志出现 "offset LOCAL_PLAYER ok" 且 内存读到的指针非空
+③ 再加 1 条（VIEW_MATRIX），判定：截图视角矩阵变化
+④ 两条都对，再批量下发</code></pre>
+<blockquote>【判据】"偏移表可用"的唯一判据：<strong>至少一条 offset 能被客户端独立验证通过</strong>。100 条里有 99 条坏、1 条好，和 100 条全坏，在客户端表现上完全一样（都是"功能不亮"）。</blockquote>
+<h2 id="h80">9.2 假成功的四种形态（每一种都真实发生过）</h2>
+<table><thead><tr><th>形态</th><th>表象</th><th>根因</th><th>检出方法</th></tr></thead><tbody><tr><td><strong>空 body 型</strong></td><td>HTTP 200，<code>Content-Length: 0</code></td><td>服务端分支漏了/异常被吞</td><td>断言 <code>body_len &gt; 0</code> 且能解析</td></tr><tr><td><strong>结构对内容错</strong></td><td>JSON 合法、字段齐全、值全是 0</td><td>默认值被当成真实值返回</td><td>拿一个"已知非零"的场景对比</td></tr><tr><td><strong>版本错配</strong></td><td><code>ver</code> 对、<code>game_ver</code> 不对</td><td>拿了旧的偏移表</td><td>在客户端日志里核对 <code>game_ver</code></td></tr><tr><td><strong>被客户端 CRC 拒</strong></td><td>客户端"看起来很满意"，但功能不生效</td><td>客户端对 blob 有内部校验（长度/CRC/字段数）</td><td>逐字节对比上游真包，找差异字段</td></tr></tbody></table>
+<pre><code># 快速体检：把所有响应按"长度=0 / 解析失败 / 全零字段"分桶
+Get-Content .\CAP_FILE.responses.jsonl | ForEach-Object {
+  $o = $_ | ConvertFrom-Json
+  $len = if ($o.body_raw) { $o.body_raw.Length } else { 0 }
+  $ok  = $null -ne $o.body
+  [pscustomobject]@{ ep=$o.ep; len=$len; parsed=$ok }
+} | Group-Object ep | ForEach-Object {
+  [pscustomobject]@{ ep=$_.Name; n=$_.Count
+    empty=($_.Group | Where-Object len -eq 0).Count
+    unparsed=($_.Group | Where-Object { -not $_.parsed }).Count }
+} | Sort-Object empty -Descending | Format-Table -AutoSize</code></pre>
+<blockquote>【反例】把 <code>offsets</code> 数组写成 <code>[]</code>（空数组）而不是 <code>null</code>，客户端认为"这次配置有效但没有任何偏移"，于是<strong>清空了上一代配置</strong>，功能全灭且不报错。教训：<strong>"空"和"没有"在客户端是两种语义</strong>，必须逐一确认。</blockquote>
+<h2 id="h81">9.3 最小可验证切片的纪律</h2>
+<table><thead><tr><th>纪律</th><th>违反后果</th></tr></thead><tbody><tr><td>一次只改一条链路</td><td>出问题无法定位，只能"再来一轮"</td></tr><tr><td>先建状态再发增量</td><td>增量被静默丢弃（客户端没有该实体）</td></tr><tr><td>先定"构造源"再谈注入</td><td>改的是展示层，真实数据没变</td></tr><tr><td>每次切片都留正对照</td><td>无法区分"没生效"与"生效了没用"</td></tr></tbody></table>
+<h2 id="h82">9.4 回归矩阵：版本 × 渠道 × 卡类型</h2>
+<table><thead><tr><th>维度</th><th>取值</th><th>必测组合</th></tr></thead><tbody><tr><td><code>CLIENT_VER</code></td><td>最新 / 次新 / 最低支持</td><td>3</td></tr><tr><td><code>CHANNEL</code></td><td>默认 / 灰度</td><td>2</td></tr><tr><td>卡类型</td><td>计时 / 包月 / 永久 / 试用</td><td>4</td></tr><tr><td>网络</td><td>正常 / 高延迟 / 断线重连</td><td>3</td></tr><tr><td>宿主版本</td><td>当前 / 上一版</td><td>2</td></tr></tbody></table>
+<p>全测 144 组没必要。<strong>必测的是"交叉最危险"的 12 组</strong>：最低版本 × 计时卡 × 断线重连、最新版本 × 灰度 × 永久卡……选组合的原则是"任一方变更即可能导致解析失败"。</p>
+<h2 id="h83">9.5 本章要点</h2>
+<ol><li>偏移表正确性只能靠下游产物判，HTTP 200 不算。</li><li>四种假成功形态各有检出法，空 body 与"空数组"最坑。</li><li>切片纪律四条，缺一条就会进入"再来一轮"循环。</li><li>回归矩阵测交叉最危险的组合，不测全排列。</li></ol>
+<hr>
+<h1 id="h84">第 10 章 卡盟与分销对接</h1>
+<h2 id="h85">10.1 卡盟的三种交互与状态机</h2>
+<table><thead><tr><th>交互</th><th>方向</th><th>内容</th><th>幂等键</th></tr></thead><tbody><tr><td><strong>发卡</strong></td><td>你的服务端 → <code>CARDMALL_API</code></td><td>请求生成 N 张卡（批次、时长、单价）</td><td><code>batch_id</code></td></tr><tr><td><strong>查卡</strong></td><td>卡盟 → 你的服务端（或你主动查）</td><td>卡是否已售/已激活</td><td><code>LICENSE_KEY</code></td></tr><tr><td><strong>回调</strong></td><td>卡盟 → 你的服务端</td><td>"某订单已支付，发卡"</td><td><code>order_no</code></td></tr></tbody></table>
+<pre><code>[下单] → [支付] → [回调: 发卡] → [用户激活] → [结算]
+              ↘ 回调失败 → [重试队列] → [人工补发]</code></pre>
+<p><strong>三种交互的顺序不能乱</strong>：先发卡后支付 = 白送；先激活后回调 = 用户拿不到卡；回调不幂等 = 重复发卡（一次支付发 10 张，这是最常见的资损形态）。</p>
+<h2 id="h86">10.2 卡密生成规则</h2>
+<table><thead><tr><th>要素</th><th>常见做法</th><th>你要决定的</th></tr></thead><tbody><tr><td>前缀</td><td>产品代号（<code>XX-</code>）</td><td>是否含批次信息</td></tr><tr><td>主体</td><td>16–24 位大写字母数字</td><td>是否剔除易混字符（<code>0/O</code>、<code>1/I</code>）</td></tr><tr><td>校验位</td><td>1–2 位（Luhn/mod 36/自研）</td><td><strong>客户端是否校验</strong>（校验就必须复刻）</td></tr><tr><td>分组</td><td>4-4-4-4</td><td>影响用户输入体验与 OCR 容错</td></tr><tr><td>唯一性</td><td>数据库唯一索引 + 生成时查重</td><td>撞库概率要算（见下）</td></tr></tbody></table>
+<p>撞库概率（生日问题近似）：字符集 32、主体长度 16，空间约 <code>32^16 ≈ 1.2e24</code>；发 100 万张时碰撞概率约 <code>n²/2N ≈ 4e-13</code>，可忽略。<strong>但</strong>如果主体只有 8 位，<code>32^8 = 1.1e12</code>，100 万张碰撞概率约 <code>4.5e-7</code>——仍然小，可一旦撞上就是"两个人同一张卡"，所以<strong>唯一索引必须有</strong>。</p>
+<blockquote>【判据】卡密生成的验收：生成 10 万张 → ① 唯一索引零冲突；② 抽样 1000 张能被客户端格式校验通过；③ 一张已激活的卡不能被再次"生成"出来。</blockquote>
+<h2 id="h87">10.3 回调的签名与重放</h2>
+<table><thead><tr><th>风险</th><th>现象</th><th>处置</th></tr></thead><tbody><tr><td>无签名</td><td>任何人 POST 你的回调地址就能发卡</td><td><strong>必须有签名</strong>，<code>sign = HMAC_SHA256(body, SIG_KEY)</code></td></tr><tr><td>签名不含时间</td><td>重放昨天的回调仍能发卡</td><td>签名串必须含 <code>REPLAY_TS</code> + <code>order_no</code></td></tr><tr><td>不校验金额</td><td>1 分钱买年卡</td><td>回调里的 <code>amount</code> 必须与自己的订单记录比对</td></tr><tr><td>回调重试</td><td>同一 <code>order_no</code> 发多次卡</td><td>幂等：<code>order_no</code> 唯一索引 + "已处理"短路</td></tr></tbody></table>
+<pre><code># 回调验签的最小实现（顺序即契约，顺序错了永远验不过）
+import hmac, hashlib, time
+def verify(body: dict, sig: str, key: str, window=300):
+    if abs(time.time() - int(body['ts'])) &gt; window: return False
+    raw = '&amp;'.join(f'{k}={body[k]}' for k in sorted(body) if k not in ('sign',) and body[k] != '')
+    return hmac.compare_digest(hmac.new(key.encode(), raw.encode(), hashlib.sha256).hexdigest(), sig)</code></pre>
+<h2 id="h88">10.4 结算与对账</h2>
+<table><thead><tr><th>项</th><th>公式</th><th>常见偏差</th></tr></thead><tbody><tr><td>应收</td><td>售价 × 数量</td><td>用了"面价"而非"代理价"</td></tr><tr><td>实收</td><td>应收 − 手续费</td><td>手续费率按阶梯，容易算错档</td></tr><tr><td>已结算</td><td>Σ(订单金额)</td><td>漏了退款单（负数未计入）</td></tr><tr><td>差额</td><td>实收 − 已结算 − 退款</td><td>不为 0 时先查"回调成功但发卡失败"的悬挂单</td></tr></tbody></table>
+<pre><code>-- 悬挂单：回调成功但卡没发出去（最容易被忘的资损口）
+SELECT o.order_no, o.amount, o.paid_at
+  FROM orders o LEFT JOIN license l ON l.order_no = o.order_no
+ WHERE o.status = 'paid' AND l.license_key IS NULL;</code></pre>
+<h2 id="h89">10.5 幂等与超时补偿</h2>
+<table><thead><tr><th>场景</th><th>幂等键</th><th>补偿动作</th></tr></thead><tbody><tr><td>回调重复</td><td><code>order_no</code></td><td>直接返回 <code>ok</code>，不重复发卡</td></tr><tr><td>发卡超时（卡盟侧超时但你已发）</td><td><code>batch_id + seq</code></td><td>查卡接口对账，缺的补</td></tr><tr><td>用户退款后仍能用</td><td><code>order_no</code> + 卡状态</td><td>退款时把卡置 <code>refunded</code>，下次心跳拒</td></tr></tbody></table>
+<blockquote>【判据】幂等的唯一判据：<strong>同一请求发 10 次，数据库里只有 1 张卡、1 条订单、1 条审计</strong>。跑一次压测脚本就能验。</blockquote>
+<h2 id="h90">10.6 本章要点</h2>
+<ol><li>三种交互顺序不能乱；回调不幂等是最常见的资损形态。</li><li>卡密要算碰撞概率，唯一索引是底线。</li><li>回调签名必须含时间与订单号，并校验金额。</li><li>对账要查"悬挂单"，差额不为 0 时先查它。</li><li>幂等用"发 10 次只有 1 条"验证，不靠代码走读。</li></ol>
+<h1 id="h91">第 11 章 风控识别面：客户端上报了什么，封禁怎么下发</h1>
+<blockquote>这一章的目的只有一个：<strong>让你自建的服务端知道"上游会看什么"</strong>，从而在自建侧做等价约束，避免"自建服能用但用户第二天全被封"。</blockquote>
+<h2 id="h92">11.1 客户端上报通道清单</h2>
+<table><thead><tr><th>通道</th><th>时机</th><th>典型字段</th><th>用途</th></tr></thead><tbody><tr><td>登录上报</td><td>首次认证</td><td><code>HWID</code>、系统版本、CPU/内存、进程列表、已加载模块、游戏路径</td><td>设备画像、异常检测</td></tr><tr><td>心跳上报</td><td>每周期</td><td>在线时长、功能开关状态、宿主窗口标题、内存读写次数</td><td>行为画像</td></tr><tr><td>异常上报</td><td>崩溃/校验失败</td><td>堆栈、模块哈希、失败原因码</td><td>反调试对抗</td></tr><tr><td>统计上报</td><td>启动/退出</td><td>版本、渠道、卡类型</td><td>运营数据</td></tr><tr><td>静默上报</td><td>不定时</td><td>可疑进程名（反外挂/杀软/调试器）</td><td><strong>最容易被忽略</strong>：它可能不在心跳里，而是独立端点</td></tr></tbody></table>
+<p><strong>识别方法</strong>：把抓包按"端点出现频次"排序，凡是<strong>低频但稳定出现</strong>的端点，多半是上报类，逐个读字段。判据：字段里出现"进程名/模块名/窗口标题"这类<strong>与业务无关</strong>的内容，就是上报。</p>
+<h2 id="h93">11.2 服务端可观测的"非人类"特征</h2>
+<table><thead><tr><th>特征</th><th>说明</th><th>自建侧怎么处理</th></tr></thead><tbody><tr><td>请求间隔过于精确</td><td>人类有抖动，脚本没有（标准差 &lt;5ms）</td><td>加抖动容忍，或直接视为机器人</td></tr><tr><td>同一 <code>HWID</code> 绑大量卡</td><td>卡商/工作室</td><td>限额（如 ≤3）</td></tr><tr><td>同一卡 7×24 在线</td><td>挂机/共享</td><td>单日在线上限</td></tr><tr><td>UA/首部缺失或恒定</td><td>自研客户端常见，但如果它<strong>偶尔变化</strong>说明有伪装</td><td>记录基线</td></tr><tr><td>时区与 IP 地理长期不符</td><td>代理/共享</td><td>只记录，不阻断</td></tr><tr><td>指纹字段全为默认值</td><td>采集失败被吞</td><td>视为异常设备</td></tr></tbody></table>
+<blockquote>【判据】判断"这是不是真人"永远不要用单一特征；<strong>用三条同向特征</strong>，任一反向就不下结论（这一条来自第 9 章的负对照思路）。</blockquote>
+<h2 id="h94">11.3 封禁名单怎么下发（三种形态）</h2>
+<table><thead><tr><th>形态</th><th>位置</th><th>生效时机</th><th>判别</th></tr></thead><tbody><tr><td>登录时拒绝</td><td>登录 <code>code</code></td><td>立即</td><td>改 <code>banned=1</code> 看登录响应</td></tr><tr><td>名单随配置下发</td><td><code>CFG_BLOB</code> 里的 <code>blacklist[]</code></td><td>下一次拉配置</td><td>在 blob 内层找 <code>hwid</code>/<code>key</code> 列表</td></tr><tr><td>独立端点查询</td><td><code>/auth/check</code></td><td>每次启动</td><td>端点表里的冷门短请求</td></tr></tbody></table>
+<p><strong>你的自建侧必须实现"能封、能解、能解释"</strong>：封禁要留原因码与时间，解封要能精确恢复；不要用"删卡"代替封禁（删了就恢复不了，且用户会看到"卡不存在"，投诉无门）。</p>
+<h2 id="h95">11.4 双端并存时的状态不一致</h2>
+<p>如果上游还在跑（用户同时能连上游和你的服），会出现：</p>
+<table><thead><tr><th>不一致</th><th>表现</th><th>处置</th></tr></thead><tbody><tr><td>时间账本分叉</td><td>你的服扣时、上游也扣时 → 用户时间双倍消耗</td><td>明确"只连一个"，或在配置里指向单一 <code>API_BASE</code></td></tr><tr><td>顶号互踢</td><td>两个服各自判顶号 → 用户被反复踢</td><td>只让一个服持有会话</td></tr><tr><td>配置代次错乱</td><td>客户端在两份 <code>cfg_ver</code> 之间来回切</td><td>让 <code>cfg_ver</code> 单调递增且全局唯一</td></tr></tbody></table>
+<h2 id="h96">11.5 本章要点</h2>
+<ol><li>上报通道有五种，静默上报最容易漏。</li><li>"非人类"判定要三条同向特征，单条不下结论。</li><li>封禁三种下发形态，自建侧必须能封/解/解释。</li><li>双端并存必然分叉，先决定"只连一个"。</li></ol>
+<hr>
+<h1 id="h97">第 12 章 自建实现：从录音回放到可上线</h1>
+<h2 id="h98">12.1 三阶段路线（不要跳阶段）</h2>
+<table><thead><tr><th>阶段</th><th>目标</th><th>产物</th><th>退出判据</th></tr></thead><tbody><tr><td><strong>S1 回放</strong></td><td>让客户端"能跑起来"，观察它怎么消费响应</td><td>请求指纹 → 响应录制库</td><td>客户端能进主界面（D1）</td></tr><tr><td><strong>S2 状态机</strong></td><td>把"录制"换成"算出来的"</td><td>最小数据库 + 6 个必需端点</td><td>换一张新卡也能走完全流程（D3）</td></tr><tr><td><strong>S3 真服务</strong></td><td>能上线、能运维</td><td>多域名、证书、监控、灰度</td><td>D4 + D5 全绿</td></tr></tbody></table>
+<p><strong>S1 的请求指纹</strong>要包含：方法 + 路径 + <strong>关键字段值</strong>（<code>LICENSE_KEY</code>/<code>CLIENT_VER</code>），不含时间戳（否则每次都是新请求）。</p>
+<pre><code># 指纹：不含 ts/nonce/sign，含"决定响应内容"的字段
+import hashlib, json
+def fp(req):
+    key = {k: req.get(k) for k in ('license_key','client_ver','channel','cmd') if k in req}
+    return hashlib.md5((req['method']+req['path']+json.dumps(key,sort_keys=True)).encode()).hexdigest()[:12]</code></pre>
+<h2 id="h99">12.2 选型与最小表结构</h2>
+<table><thead><tr><th>组件</th><th>建议</th><th>理由</th></tr></thead><tbody><tr><td>语言/框架</td><td>任意你熟的（Python FastAPI / Go / Node / PHP 都行）</td><td>端点少，语言不是瓶颈</td></tr><tr><td>存储</td><td>SQLite（单机）→ PostgreSQL/MySQL（多机）</td><td>授权是<strong>强一致</strong>场景，别用最终一致的 KV</td></tr><tr><td>部署</td><td>单机 + 反向代理</td><td>先跑通，再谈集群</td></tr></tbody></table>
+<pre><code>-- 最小可用六表（完整版见附录 C）
+CREATE TABLE license(
+  license_key TEXT PRIMARY KEY, type TEXT, duration_sec INTEGER,
+  start_ts INTEGER, expire_ts INTEGER, remain_sec INTEGER,
+  hwid TEXT, hwid_changes INTEGER DEFAULT 0,
+  frozen INTEGER DEFAULT 0, banned INTEGER DEFAULT 0, ban_reason TEXT,
+  last_beat INTEGER, session_id TEXT, batch_id TEXT, order_no TEXT,
+  created_at INTEGER, updated_at INTEGER);
+CREATE TABLE session(session_id TEXT PRIMARY KEY, license_key TEXT, hwid TEXT,
+  created_at INTEGER, last_seen INTEGER, ua TEXT, ip TEXT);
+CREATE TABLE cfg_release(cfg_ver INTEGER PRIMARY KEY, game_ver TEXT,
+  blob_sha256 TEXT, blob_path TEXT, active INTEGER DEFAULT 0, created_at INTEGER);
+CREATE TABLE cmd(id INTEGER PRIMARY KEY AUTOINCREMENT, license_key TEXT, kind TEXT,
+  payload TEXT, created_at INTEGER, delivered_at INTEGER, acked_at INTEGER, expire_at INTEGER);
+CREATE TABLE orders(order_no TEXT PRIMARY KEY, license_key TEXT, amount INTEGER,
+  status TEXT, paid_at INTEGER, created_at INTEGER);
+CREATE TABLE audit(id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER, actor TEXT,
+  action TEXT, target TEXT, before TEXT, after TEXT);</code></pre>
+<h2 id="h100">12.3 并发、限流与防刷</h2>
+<table><thead><tr><th>场景</th><th>阈值（按你的量调）</th><th>实现</th></tr></thead><tbody><tr><td>登录尝试</td><td>单 IP 10 次/分，单卡 5 次/分</td><td>令牌桶 + 计数窗口</td></tr><tr><td>心跳</td><td>单卡 1 次/30s（拒绝过密）</td><td>用 <code>last_beat</code> 做节流</td></tr><tr><td>配置下载</td><td>单卡 5 次/小时</td><td>缓存 + <code>ETag</code></td></tr><tr><td>错误率保护</td><td>单 IP 错误 &gt; 20 次/分 → 冷却 10 分钟</td><td>防撞库</td></tr></tbody></table>
+<blockquote>【判据】防刷的正确性判据：<strong>用脚本对同一张卡打 1000 次登录，服务端 CPU 与数据库连接数不涨</strong>。做不到就说明限流在应用层太晚，要前置到反向代理。</blockquote>
+<h2 id="h101">12.4 部署拓扑</h2>
+<pre><code>            ┌── api-1.API_BASE  (主)
+客户端 ──TLS─┤
+            ├── api-2.API_BASE  (备1，DNS 或客户端列表轮询)
+            └── cfg.API_BASE    (静态：CFG_BLOB / 更新包，CDN 前置)
+                     │
+              [反向代理/nginx] ── [应用 x2] ── [数据库] ── [备份]</code></pre>
+<table><thead><tr><th>项</th><th>配置</th><th>注意</th></tr></thead><tbody><tr><td>证书</td><td>通配符或每域名一张</td><td><code>CN</code> 与 <code>SAN</code> 都要覆盖</td></tr><tr><td>健康检查</td><td><code>/healthz</code> 返回 <code>{"ok":true}</code></td><td>不要暴露版本号</td></tr><tr><td>多域名</td><td>客户端列表 + DNS 双保险</td><td>切换时间要实测（目标 ≤30s）</td></tr><tr><td>静态分发</td><td>CDN + 版本化路径</td><td>缓存键含 <code>cfg_ver</code>（7.5）</td></tr></tbody></table>
+<h2 id="h102">12.5 观测：三个必须有、两个不要有</h2>
+<table><thead><tr><th>必须有</th><th>指标</th><th>告警线</th></tr></thead><tbody><tr><td>登录成功率</td><td><code>成功 / 总尝试</code>（分 code）</td><td>&lt;90% 持续 5 分钟</td></tr><tr><td>心跳存活数</td><td>每 60s 的唯一 <code>session_id</code></td><td>掉 30% 即告警</td></tr><tr><td>配置下发</td><td>200 率 + 平均体积</td><td>体积突变 ±50%</td></tr></tbody></table>
+<table><thead><tr><th>不要有</th><th>原因</th></tr></thead><tbody><tr><td>日志里存完整 <code>LICENSE_KEY</code> / <code>SESSION_TOKEN</code></td><td>一旦日志泄露等于卡密泄露</td></tr><tr><td>日志里存 <code>HWID</code> 原文</td><td>换 hash 存储即可对账</td></tr></tbody></table>
+<h2 id="h103">12.6 割接与回滚</h2>
+<table><thead><tr><th>步骤</th><th>动作</th><th>回滚条件</th></tr></thead><tbody><tr><td>1</td><td>只切 1 个 <code>CHANNEL</code> 到自建</td><td>该渠道登录成功率 &lt;80%</td></tr><tr><td>2</td><td>白名单 50 张卡</td><td>任一"功能不生效"反馈</td></tr><tr><td>3</td><td>全量切</td><td>心跳存活骤降</td></tr><tr><td>4</td><td>关闭上游回退通路</td><td>保留 7 天再关</td></tr></tbody></table>
+<p><strong>回滚必须能在 1 分钟内完成</strong>：DNS TTL ≤60s，或客户端域名列表里把旧地址放第一位。</p>
+<h2 id="h104">12.7 本章要点</h2>
+<ol><li>S1/S2/S3 不能跳，S1 的价值是"观察客户端怎么消费"。</li><li>指纹不含时间戳，否则回放永远 miss。</li><li>授权是强一致场景，别用最终一致存储。</li><li>限流前置到反向代理，应用层只做业务校验。</li><li>割接按渠道灰度，回滚必须 1 分钟内。</li></ol>
+<hr>
+<h1 id="h105">第 13 章 一页速查</h1>
+<h2 id="h106">13.1 十阶段（从零到可运维）</h2>
+<table><thead><tr><th>#</th><th>阶段</th><th>一句话判据</th></tr></thead><tbody><tr><td>1</td><td>前提实证</td><td>断网/黑洞/空 200 三实验做完</td></tr><tr><td>2</td><td>样本冻结</td><td>哈希+时间+版本三件套落盘</td></tr><tr><td>3</td><td>域名与端点</td><td>端点表 ≥ 客户端实际调用的 90%</td></tr><tr><td>4</td><td>加密与签名</td><td>能用已知 pair 重算出同一个 <code>sign</code></td></tr><tr><td>5</td><td>契约表</td><td>必需等级三分完成，错误码覆盖 ≥80%</td></tr><tr><td>6</td><td>授权账本</td><td>一张卡走完全生命周期不失衡</td></tr><tr><td>7</td><td>配置下发</td><td>客户端应用后<strong>功能下游产物</strong>变化</td></tr><tr><td>8</td><td>心跳与指令</td><td>拔网 5 分钟自恢复；踢人幂等</td></tr><tr><td>9</td><td>卡盟闭环</td><td>发 10 次回调只出 1 张卡</td></tr><tr><td>10</td><td>割接</td><td>灰度回滚 1 分钟内完成</td></tr></tbody></table>
+<h2 id="h107">13.2 开工前 8 项自检（缺一项 ⇒ 结果作废）</h2>
+<pre><code>□ 1 代次    样本 SHA256 前 8 位记下来了吗？抓包时间对齐了吗？
+□ 2 基线    这次实验的"正对照"是什么？跑过吗？
+□ 3 环境    没有别的客户端实例在跑？hosts/代理不是上一轮残留？
+□ 4 时钟    用的是哪个钟？Δt 窗口定了吗？
+□ 5 判据    这次的【真判据】写下来了吗？有没有混进"HTTP 200"这种假判据？
+□ 6 分层    这次改的是契约层/状态层/数据层/运维层的哪一层？
+□ 7 可归因  如果失败，怎么区分"没生效"与"生效了没用"？
+□ 8 回滚    这次改动怎么撤回？撤回要几步？</code></pre>
+<h2 id="h108">13.3 报数字前 5 项检查</h2>
+<pre><code>□ 1 分母    端点/字段/错误码的分母说清了吗？
+□ 2 去重    同一请求重复抓到的去重了吗？（指纹不含 ts/nonce）
+□ 3 Δ       有负对照吗？Δ 是多少？
+□ 4 未命名  剩下的"未命名"有多少、都是什么形态？
+□ 5 档位    现在报的是 D0–D5 的哪一档？</code></pre>
+<h2 id="h109">13.4 三条停手信号</h2>
+<pre><code>① 你开始枚举 KDF/编码变体超过 2 小时
+   ⇒ 停。先验"密钥是不是服务端下发的"。
+② 指标恒为 100% 或恒为 0
+   ⇒ 停。它是结构性 artifact，不是指标。
+③ 你说"这次应该不一样"
+   ⇒ 停。回去补第 2 项自检（基线）。</code></pre>
+<h2 id="h110">13.5 交付验收（十项，缺一项不算还原）</h2>
+<ul><li>&amp;#9744; 任意卡密可登录，<code>SESSION_TOKEN</code> 被 ≥2 个端点接受</li><li>&amp;#9744; <code>CFG_BLOB</code> 可自产，客户端应用后功能生效</li><li>&amp;#9744; <code>OFFSETS_TABLE</code> 至少一条 offset 被客户端独立验证通过</li><li>&amp;#9744; 心跳扣时误差 &lt;2%，断线不白嫖、故障不多扣</li><li>&amp;#9744; 到期/冻结/封禁/顶号四种状态都正确拒绝且<strong>文案可变</strong></li><li>&amp;#9744; 远程指令可下发、可确认、可过期</li><li>&amp;#9744; 卡盟发卡→激活→回调→结算闭环，回调重复不出第二张卡</li><li>&amp;#9744; 对账：分项之和 = 发卡总量，误差 0</li><li>&amp;#9744; 灰度与回滚各演练一次，均 ≤1 分钟</li><li>&amp;#9744; 换一版 <code>CLIENT_VER</code> 后，以上九项仍全绿</li></ul>
+<hr>
+<h1 id="h111">附录 A 报文样本库与字段索引规范</h1>
+<h2 id="h112">A.1 目录规范</h2>
+<pre><code>RESULT_DIR/
+├── manifest_sha256.csv        样本哈希
+├── manifest_mtime.csv         样本时间
+├── CAP_FILE.raw/              原始抓包（pcap/etl/代理日志）
+├── CAP_FILE.requests.jsonl    标准化请求（一行一条）
+├── CAP_FILE.responses.jsonl   标准化响应
+├── blobs/                     密文/配置原文件（永不覆盖）
+├── decoded/                   解出的明文（可重生成，可删）
+├── INDEX.md                   端点表 + 字段索引（人读）
+└── NOTES.md                   假设、反例、待验清单</code></pre>
+<h2 id="h113">A.2 一行记录的字段（照抄）</h2>
+<pre><code>{"t":"2026-11-26T22:31:02.114+08:00","ep":"/auth/login","method":"POST",
+ "ua":"…","ver":"114","channel":"default","req_len":214,"resp_len":389,
+ "http":200,"code":0,"blob":"blobs/0003.bin","state":"ok","fp":"a1b2c3d4e5f6"}</code></pre>
+<h2 id="h114">A.3 字段索引（INDEX.md 的表头）</h2>
+<table><thead><tr><th>字段</th><th>端点</th><th>类型</th><th>可空</th><th>语义</th><th>判定依据</th><th>置信度</th></tr></thead><tbody></tbody></table>
+<h2 id="h115">A.4 三条纪律</h2>
+<ol><li><code>decoded/</code> 可随时删，<code>blobs/</code> 永不覆盖。</li><li>每条结论带"判定依据"（哪次实验、哪份抓包）。</li><li>未命名字段也必须进索引，标注"未命名 + 形态"。</li></ol>
+<hr>
+<h1 id="h116">附录 B 加密/签名速查与代码骨架</h1>
+<h2 id="h117">B.1 指纹速查（复制到你的笔记里）</h2>
+<table><thead><tr><th>常量/结构</th><th>算法</th></tr></thead><tbody><tr><td><code>0x9E3779B9</code> / <code>0x61C88647</code></td><td>TEA/XTEA</td></tr><tr><td>256 字节表以 <code>63 7C 77 7B</code> 开头</td><td>AES S-box</td></tr><tr><td>256 循环 + <code>swap</code></td><td>RC4</td></tr><tr><td>首字节 <code>1F 8B</code> / <code>78 9C</code></td><td>gzip / zlib</td></tr><tr><td><code>04 22 4D 18</code></td><td>lz4</td></tr><tr><td>密文长度整除 16/8</td><td>AES/DES 类分组</td></tr><tr><td>密文与明文等长</td><td>流密码（RC4/XOR）</td></tr></tbody></table>
+<h2 id="h118">B.2 AES-CBC 解密骨架（含 IV 两种位置）</h2>
+<pre><code>from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
+def dec(key: bytes, blob: bytes):
+    for iv_mode in ('prefix','zero'):
+        iv = blob[:16] if iv_mode == 'prefix' else b'\x00'*16
+        ct = blob[16:] if iv_mode == 'prefix' else blob
+        for pad in (True, False):
+            try:
+                pt = AES.new(key, AES.MODE_CBC, iv).decrypt(ct)
+                pt = unpad(pt, 16) if pad else pt
+                if pt[:2] in (b'\x1f\x8b', b'x\x9c') or pt[:1] in (b'{', b'['):
+                    return iv_mode, pad, pt
+            except Exception:
+                pass
+    raise ValueError('undecodable')</code></pre>
+<h2 id="h119">B.3 RC4（自研实现常见，注意它与标准实现可能差一个字节）</h2>
+<pre><code>def rc4(key: bytes, data: bytes) -&gt; bytes:
+    S = list(range(256)); j = 0
+    for i in range(256):
+        j = (j + S[i] + key[i % len(key)]) &amp; 0xFF
+        S[i], S[j] = S[j], S[i]
+    i = j = 0; out = bytearray()
+    for b in data:
+        i = (i + 1) &amp; 0xFF; j = (j + S[i]) &amp; 0xFF
+        S[i], S[j] = S[j], S[i]
+        out.append(b ^ S[(S[i] + S[j]) &amp; 0xFF])
+    return bytes(out)</code></pre>
+<h2 id="h120">B.4 签名候选枚举（4.4 的实现）</h2>
+<pre><code>def candidates(body, key):
+    items = [(k, str(v)) for k, v in body.items() if k != 'sign' and str(v) != '']
+    for order in (sorted(items), items):
+        for sep in ('', '&amp;', '|'):
+            for fmt in ('{k}={v}', '{v}'):
+                s = sep.join(fmt.format(k=k, v=v) for k, v in order)
+                for tail in (key, key.lower()):
+                    yield s + tail</code></pre>
+<h2 id="h121">B.5 解不出时：写 <code>undecodable</code> + 保留原文件（4.6）</h2>
+<hr>
+<h1 id="h122">附录 C 授权数据模型（完整版）</h1>
+<pre><code>CREATE TABLE license(
+  license_key   TEXT PRIMARY KEY,
+  type          TEXT NOT NULL,             -- timer|monthly|forever|trial|redeem
+  duration_sec  INTEGER,
+  start_ts      INTEGER,                   -- 首次激活
+  expire_ts     INTEGER,
+  remain_sec    INTEGER,
+  hwid          TEXT,
+  hwid_changes  INTEGER DEFAULT 0,
+  frozen        INTEGER DEFAULT 0,
+  banned        INTEGER DEFAULT 0,
+  ban_reason    TEXT,
+  last_beat     INTEGER,
+  session_id    TEXT,
+  batch_id      TEXT,
+  order_no      TEXT UNIQUE,
+  refunded      INTEGER DEFAULT 0,
+  created_at    INTEGER NOT NULL,
+  updated_at    INTEGER
+);
+CREATE INDEX idx_license_hwid ON license(hwid);
+CREATE INDEX idx_license_batch ON license(batch_id);
+CREATE UNIQUE INDEX idx_order ON orders(order_no);
+
+-- 一个卡的完整快照（排查用）
+SELECT * FROM license WHERE license_key = :key;
+-- 顶号检测：同卡多个活跃会话
+SELECT session_id, last_seen FROM session WHERE license_key = :key ORDER BY last_seen DESC;
+-- 心跳漏账检测：remain 递减但 last_beat 异常
+SELECT license_key, last_beat, remain_sec FROM license
+ WHERE last_beat &lt; :now - 600 AND banned = 0 AND frozen = 0;</code></pre>
+<hr>
+<h1 id="h123">附录 D 部署拓扑、容灾与灰度</h1>
+<h2 id="h124">D.1 nginx 片段（含配置类缓存策略）</h2>
+<pre><code>server {
+  listen 443 ssl http2;
+  server_name api.API_BASE;
+  ssl_certificate     /etc/ssl/API_BASE.crt;
+  ssl_certificate_key /etc/ssl/API_BASE.key;
+
+  location = /healthz { return 200 '{"ok":true}'; add_header Content-Type application/json; }
+
+  location /cfg/ {
+    alias /srv/cfg/;                       # 路径含 cfg_ver
+    add_header Cache-Control "public, max-age=300, must-revalidate";
+    add_header ETag on;
+    types { application/octet-stream bin; }
+  }
+
+  location / { proxy_pass http://app:8000; proxy_read_timeout 15s; }
+  limit_req zone=api burst=20 nodelay;
+}</code></pre>
+<h2 id="h125">D.2 容灾检查表</h2>
+<table><thead><tr><th>项</th><th>做法</th><th>演练判据</th></tr></thead><tbody><tr><td>主域名故障</td><td>客户端切备用</td><td>≤30s 恢复</td></tr><tr><td>数据库损坏</td><td>每小时全量 + 5 分钟 WAL 归档</td><td>恢复到 5 分钟前，账本误差 0</td></tr><tr><td>配置误发</td><td>改 <code>cfg_release.active</code> 指针</td><td>≤1 分钟全量回退</td></tr><tr><td>应用崩溃</td><td>健康检查 + 自动重启</td><td>心跳存活 2 分钟内恢复 80%</td></tr></tbody></table>
+<h2 id="h126">D.3 灰度键设计（7.4 的落地）</h2>
+<pre><code>gray = (crc32(HWID) % 100) &lt; percent      # 按设备分桶，稳定可分
+或   = CHANNEL in ('beta',)              # 按渠道
+或   = license_key in WHITELIST           # 精确指定</code></pre>
+<hr>
+<h1 id="h127">附录 E 换目标迁移检查表</h1>
+<p>换一个 <code>TARGET</code> 时，按这张表逐项确认；<strong>每项都要写"是/否/不适用"</strong>，不许留空：</p>
+<ul><li>&amp;#9744; 主体搞清：这次还原的是<strong>外挂自己的服务端</strong>，不是游戏服务器</li><li>&amp;#9744; 三条前提重做实证（断网/黑洞/空 200）</li><li>&amp;#9744; 六层表重填，<code>CHEAT_CORE</code> 与驱动是否同一套</li><li>&amp;#9744; 域名列表的代次：跟主程序还是跟更新包</li><li>&amp;#9744; 加密算法的指纹表重跑（不要沿用上家的结论）</li><li>&amp;#9744; 密钥形态：硬编码/派生/下发/协商，用"下发优先"顺序试</li><li>&amp;#9744; 签名字段集重测（E1–E5）</li><li>&amp;#9744; 时间窗口与 <code>NONCE</code> 语义重测（R1–R5）</li><li>&amp;#9744; 卡密类型集合（计时/包月/永久/试用/兑换）是否不同</li><li>&amp;#9744; 扣时点重测（5 个候选）</li><li>&amp;#9744; <code>CFG_BLOB</code> 层次顺序重判（6 种排列）</li><li>&amp;#9744; <code>OFFSETS_TABLE</code> 结构与同代约束</li><li>&amp;#9744; 更新三字段（<code>ver_new</code>/<code>force</code>/<code>min_ver</code>）正交测</li><li>&amp;#9744; 心跳间隔、TTL、指令形态（拉取/推送）</li><li>&amp;#9744; 卡盟是否同一家、回调签名是否一致</li><li>&amp;#9744; 风控上报通道重扫（尤其静默上报）</li><li>&amp;#9744; 回归矩阵的"最危险 12 组"重新选</li><li>&amp;#9744; 交付验收十项重新过一遍</li></ul>
+<blockquote>最后一句：<strong>方法论的价值不在结论，在"下一步该验什么"</strong>。任何一个结论，只要没写"怎么被判死的"，就不该进你的文档。</blockquote>
+</main></div>
+<script>
+document.querySelectorAll('nav a').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    const t=document.getElementById(a.dataset.id);
+    if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+</script></body></html>
